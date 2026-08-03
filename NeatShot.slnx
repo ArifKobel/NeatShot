@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NeatShot.App/NeatShot.App.csproj" />
+    <Project Path="src/NeatShot.Core/NeatShot.Core.csproj" />
+    <Project Path="src/NeatShot.Platform/NeatShot.Platform.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NeatShot.Core.Tests/NeatShot.Core.Tests.csproj" />
+  </Folder>
+</Solution>
