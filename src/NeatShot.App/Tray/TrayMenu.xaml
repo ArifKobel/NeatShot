@@ -1,0 +1,20 @@
+<ContextMenu x:Class="NeatShot.Tray.TrayMenu"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:tray="clr-namespace:NeatShot.Tray"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance tray:TrayMenuViewModel}">
+  <MenuItem Header="Capture Region"
+            InputGestureText="{Binding CaptureRegionShortcut}"
+            Command="{Binding CaptureRegionCommand}" />
+  <MenuItem Header="Capture Window"
+            InputGestureText="{Binding CaptureWindowShortcut}"
+            Command="{Binding CaptureWindowCommand}" />
+  <MenuItem Header="Capture Fullscreen"
+            InputGestureText="{Binding CaptureFullscreenShortcut}"
+            Command="{Binding CaptureFullscreenCommand}" />
+  <Separator />
+  <MenuItem Header="Quit NeatShot" Command="{Binding ExitCommand}" />
+</ContextMenu>
