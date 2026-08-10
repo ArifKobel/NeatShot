@@ -4,6 +4,8 @@ using NeatShot.Capture;
 using NeatShot.Core.Capture;
 using NeatShot.Core.Input;
 using NeatShot.Core.Settings;
+using NeatShot.Export;
+using NeatShot.Overlay;
 using NeatShot.Platform.Capture;
 using NeatShot.Platform.Input;
 using NeatShot.Platform.Interop;
@@ -31,6 +33,8 @@ public static class ServiceCollectionExtensions
             Path.Combine(AppContext.BaseDirectory, "Assets", "neatshot.ico"),
             "NeatShot"));
 
+        services.AddSingleton<OverlayService>();
+        services.AddSingleton<ImageFileWriter>();
         services.AddSingleton<CaptureCoordinator>();
         services.AddSingleton<TrayMenuViewModel>();
         services.AddSingleton<TrayController>();
