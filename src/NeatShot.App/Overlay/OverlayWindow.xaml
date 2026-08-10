@@ -1,0 +1,18 @@
+<Window x:Class="NeatShot.Overlay.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:overlay="clr-namespace:NeatShot.Overlay"
+        Title="NeatShot Overlay"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Cursor="Cross"
+        Background="Black"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True">
+  <Grid>
+    <Image x:Name="Backdrop" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+    <overlay:SelectionCanvas x:Name="Canvas" />
+  </Grid>
+</Window>
