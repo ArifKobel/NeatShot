@@ -19,6 +19,8 @@ public sealed record AppSettings
 
     public bool CopyToClipboard { get; init; } = true;
 
+    public bool SaveToDisk { get; init; } = true;
+
     public bool LaunchAtStartup { get; init; }
 
     public TimeSpan QuickAccessTimeout { get; init; } = TimeSpan.FromSeconds(8);
