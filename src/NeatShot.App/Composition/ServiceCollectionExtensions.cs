@@ -12,6 +12,7 @@ using NeatShot.Platform.Interop;
 using NeatShot.Platform.Screens;
 using NeatShot.Platform.Tray;
 using NeatShot.Platform.Windows;
+using NeatShot.QuickAccess;
 using NeatShot.Tray;
 
 namespace NeatShot.Composition;
@@ -35,6 +36,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<OverlayService>();
         services.AddSingleton<ImageFileWriter>();
+        services.AddSingleton<QuickAccessService>();
         services.AddSingleton<CaptureCoordinator>();
         services.AddSingleton<TrayMenuViewModel>();
         services.AddSingleton<TrayController>();

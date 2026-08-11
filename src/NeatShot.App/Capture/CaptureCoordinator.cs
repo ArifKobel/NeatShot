@@ -4,6 +4,7 @@ using NeatShot.Core.Settings;
 using NeatShot.Export;
 using NeatShot.Imaging;
 using NeatShot.Overlay;
+using NeatShot.QuickAccess;
 
 namespace NeatShot.Capture;
 
@@ -13,6 +14,7 @@ public sealed partial class CaptureCoordinator
     private readonly IScreenCapture _screenCapture;
     private readonly OverlayService _overlay;
     private readonly ImageFileWriter _fileWriter;
+    private readonly QuickAccessService _quickAccess;
     private readonly SettingsManager _settings;
     private readonly ILogger<CaptureCoordinator> _logger;
     private bool _busy;
@@ -22,6 +24,7 @@ public sealed partial class CaptureCoordinator
         IScreenCapture screenCapture,
         OverlayService overlay,
         ImageFileWriter fileWriter,
+        QuickAccessService quickAccess,
         SettingsManager settings,
         ILogger<CaptureCoordinator> logger)
     {
@@ -29,6 +32,7 @@ public sealed partial class CaptureCoordinator
         _screenCapture = screenCapture;
         _overlay = overlay;
         _fileWriter = fileWriter;
+        _quickAccess = quickAccess;
         _settings = settings;
         _logger = logger;
     }
@@ -91,15 +95,21 @@ public sealed partial class CaptureCoordinator
             ClipboardImageService.SetImage(bitmap);
         }
 
-        var path = _fileWriter.Save(bitmap, capture.CapturedAt);
-        LogCaptureSaved(capture.Mode, capture.Image.Width, capture.Image.Height, path);
+        string? path = null;
+        if (_settings.Current.SaveToDisk)
+        {
+            path = _fileWriter.Save(bitmap, capture.CapturedAt);
+        }
+
+        LogCaptured(capture.Mode, capture.Image.Width, capture.Image.Height, path ?? "memory");
+        _quickAccess.Show(capture, path);
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "{Mode} capture cancelled")]
     private partial void LogCaptureCancelled(CaptureMode mode);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "{Mode} capture {Width}x{Height} saved to {Path}")]
-    private partial void LogCaptureSaved(CaptureMode mode, int width, int height, string path);
+    [LoggerMessage(Level = LogLevel.Information, Message = "{Mode} capture {Width}x{Height} stored at {Path}")]
+    private partial void LogCaptured(CaptureMode mode, int width, int height, string path);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Open last capture requested")]
     private partial void LogOpenLastRequested();

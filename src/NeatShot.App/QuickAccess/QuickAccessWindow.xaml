@@ -1,0 +1,103 @@
+<Window x:Class="NeatShot.QuickAccess.QuickAccessWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:quickAccess="clr-namespace:NeatShot.QuickAccess"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance quickAccess:QuickAccessViewModel}"
+        Title="NeatShot"
+        Width="300"
+        SizeToContent="Height"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True">
+  <Window.Resources>
+    <Style x:Key="ActionButton" TargetType="Button">
+      <Setter Property="Width" Value="36" />
+      <Setter Property="Height" Value="32" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="15" />
+      <Setter Property="Foreground" Value="#F2F2F5" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Chrome"
+                    Background="{TemplateBinding Background}"
+                    CornerRadius="6">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="#33FFFFFF" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="#22FFFFFF" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="#66F2F2F5" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+
+  <Border x:Name="Card"
+          Margin="12"
+          Background="#F01E1E24"
+          CornerRadius="10"
+          BorderBrush="#40FFFFFF"
+          BorderThickness="1">
+    <Border.Effect>
+      <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.45" />
+    </Border.Effect>
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <Border x:Name="Thumbnail"
+              Grid.Row="0"
+              Margin="8,8,8,0"
+              Height="160"
+              Background="#111114"
+              CornerRadius="6"
+              Cursor="SizeAll"
+              ClipToBounds="True">
+        <Image Source="{Binding Bitmap}"
+               Stretch="Uniform"
+               RenderOptions.BitmapScalingMode="HighQuality" />
+      </Border>
+
+      <DockPanel Grid.Row="1" Margin="8,6,8,8" LastChildFill="False">
+        <TextBlock DockPanel.Dock="Left"
+                   VerticalAlignment="Center"
+                   Margin="6,0,0,0"
+                   Foreground="#A0F2F2F5"
+                   FontSize="12"
+                   Text="{Binding Dimensions}" />
+        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Close"
+                Content="&#xE711;" Command="{Binding DismissCommand}" />
+        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Edit"
+                Content="&#xE70F;" Command="{Binding EditCommand}" />
+        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Show in folder"
+                Content="&#xE838;" Command="{Binding RevealInExplorerCommand}" />
+        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Save"
+                Content="&#xE74E;" Command="{Binding SaveCommand}" />
+        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Copy to clipboard"
+                Content="&#xE8C8;" Command="{Binding CopyCommand}" />
+      </DockPanel>
+    </Grid>
+  </Border>
+</Window>
