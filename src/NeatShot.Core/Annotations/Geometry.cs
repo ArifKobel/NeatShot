@@ -60,7 +60,11 @@ public readonly record struct ImageRect(double X, double Y, double Width, double
 public readonly record struct Rgba(byte R, byte G, byte B, byte A = 255)
 {
     public static Rgba Red => new(0xFF, 0x3B, 0x30);
+    public static Rgba Orange => new(0xFF, 0x9F, 0x0A);
     public static Rgba Yellow => new(0xFF, 0xD6, 0x0A);
+    public static Rgba Green => new(0x30, 0xD1, 0x58);
+    public static Rgba Blue => new(0x0A, 0x84, 0xFF);
+    public static Rgba Purple => new(0xBF, 0x5A, 0xF2);
     public static Rgba White => new(0xFF, 0xFF, 0xFF);
     public static Rgba Black => new(0, 0, 0);
 }
