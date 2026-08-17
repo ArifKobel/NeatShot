@@ -4,6 +4,7 @@ using NeatShot.Capture;
 using NeatShot.Core.Capture;
 using NeatShot.Core.Input;
 using NeatShot.Core.Settings;
+using NeatShot.Editor;
 using NeatShot.Export;
 using NeatShot.Overlay;
 using NeatShot.Platform.Capture;
@@ -37,6 +38,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<OverlayService>();
         services.AddSingleton<ImageFileWriter>();
         services.AddSingleton<QuickAccessService>();
+        services.AddSingleton<EditorService>();
         services.AddSingleton<CaptureCoordinator>();
         services.AddSingleton<TrayMenuViewModel>();
         services.AddSingleton<TrayController>();

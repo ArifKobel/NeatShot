@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using NeatShot.Core.Capture;
 using NeatShot.Core.Settings;
+using NeatShot.Editor;
 using NeatShot.Export;
 using NeatShot.Imaging;
 using NeatShot.Overlay;
@@ -15,6 +16,7 @@ public sealed partial class CaptureCoordinator
     private readonly OverlayService _overlay;
     private readonly ImageFileWriter _fileWriter;
     private readonly QuickAccessService _quickAccess;
+    private readonly EditorService _editor;
     private readonly SettingsManager _settings;
     private readonly ILogger<CaptureCoordinator> _logger;
     private bool _busy;
@@ -25,6 +27,7 @@ public sealed partial class CaptureCoordinator
         OverlayService overlay,
         ImageFileWriter fileWriter,
         QuickAccessService quickAccess,
+        EditorService editor,
         SettingsManager settings,
         ILogger<CaptureCoordinator> logger)
     {
@@ -33,6 +36,8 @@ public sealed partial class CaptureCoordinator
         _overlay = overlay;
         _fileWriter = fileWriter;
         _quickAccess = quickAccess;
+        _editor = editor;
+        _quickAccess.EditRequested += (_, capture) => _editor.Open(capture);
         _settings = settings;
         _logger = logger;
     }
@@ -81,7 +86,11 @@ public sealed partial class CaptureCoordinator
 
     public Task OpenLastAsync()
     {
-        LogOpenLastRequested();
+        if (LastCapture is { } capture)
+        {
+            _editor.Open(capture);
+        }
+
         return Task.CompletedTask;
     }
 
@@ -110,7 +119,4 @@ public sealed partial class CaptureCoordinator
 
     [LoggerMessage(Level = LogLevel.Information, Message = "{Mode} capture {Width}x{Height} stored at {Path}")]
     private partial void LogCaptured(CaptureMode mode, int width, int height, string path);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Open last capture requested")]
-    private partial void LogOpenLastRequested();
 }
