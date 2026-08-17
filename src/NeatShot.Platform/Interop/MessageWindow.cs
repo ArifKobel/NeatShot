@@ -44,7 +44,7 @@ public sealed class MessageWindow : IDisposable
             0,
             0,
             0,
-            HWND.HWND_MESSAGE,
+            HWND.Null,
             null,
             null,
             null);
