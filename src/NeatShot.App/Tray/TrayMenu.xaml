@@ -16,5 +16,7 @@
             InputGestureText="{Binding CaptureFullscreenShortcut}"
             Command="{Binding CaptureFullscreenCommand}" />
   <Separator />
+  <MenuItem Header="Settings…" Command="{Binding OpenSettingsCommand}" />
+  <Separator />
   <MenuItem Header="Quit NeatShot" Command="{Binding ExitCommand}" />
 </ContextMenu>

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using NeatShot.Capture;
 using NeatShot.Core.Capture;
 using NeatShot.Core.Settings;
+using NeatShot.Settings;
 
 namespace NeatShot.Tray;
 
@@ -11,11 +12,14 @@ public sealed partial class TrayMenuViewModel : ObservableObject
 {
     private readonly CaptureCoordinator _coordinator;
     private readonly SettingsManager _settings;
+    private readonly SettingsWindowService _settingsWindow;
 
-    public TrayMenuViewModel(CaptureCoordinator coordinator, SettingsManager settings)
+    public TrayMenuViewModel(CaptureCoordinator coordinator, SettingsManager settings, SettingsWindowService settingsWindow)
     {
         _coordinator = coordinator;
         _settings = settings;
+        _settingsWindow = settingsWindow;
+        settings.Changed += (_, _) => OnPropertyChanged(string.Empty);
     }
 
     public string CaptureRegionShortcut => Shortcut(HotkeyAction.CaptureRegion);
@@ -32,6 +36,9 @@ public sealed partial class TrayMenuViewModel : ObservableObject
 
     [RelayCommand]
     private Task CaptureFullscreen() => _coordinator.StartAsync(CaptureMode.Fullscreen);
+
+    [RelayCommand]
+    private void OpenSettings() => _settingsWindow.Open();
 
     [RelayCommand]
     private static void Exit() => Application.Current.Shutdown();

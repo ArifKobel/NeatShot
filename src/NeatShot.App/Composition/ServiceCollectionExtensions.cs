@@ -11,9 +11,11 @@ using NeatShot.Platform.Capture;
 using NeatShot.Platform.Input;
 using NeatShot.Platform.Interop;
 using NeatShot.Platform.Screens;
+using NeatShot.Platform.Startup;
 using NeatShot.Platform.Tray;
 using NeatShot.Platform.Windows;
 using NeatShot.QuickAccess;
+using NeatShot.Settings;
 using NeatShot.Tray;
 
 namespace NeatShot.Composition;
@@ -24,6 +26,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<ISettingsStore>(_ => JsonSettingsStore.InUserProfile());
         services.AddSingleton<SettingsManager>();
+        services.AddSingleton<IStartupRegistrar>(_ => RegistryStartupRegistrar.ForCurrentProcess());
 
         services.AddSingleton<MessageWindow>();
         services.AddSingleton<IScreenProvider, ScreenProvider>();
@@ -39,10 +42,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ImageFileWriter>();
         services.AddSingleton<QuickAccessService>();
         services.AddSingleton<EditorService>();
+        services.AddSingleton<SettingsWindowService>();
         services.AddSingleton<CaptureCoordinator>();
         services.AddSingleton<TrayMenuViewModel>();
         services.AddSingleton<TrayController>();
         services.AddHostedService<HotkeyBinder>();
+        services.AddHostedService<StartupSync>();
 
         return services;
     }
