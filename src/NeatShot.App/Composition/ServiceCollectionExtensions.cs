@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IScreenProvider, ScreenProvider>();
         services.AddSingleton<IScreenCapture, GdiScreenCapture>();
         services.AddSingleton<IWindowEnumerator, WindowEnumerator>();
+        services.AddSingleton<ICursorLocator, CursorLocator>();
         services.AddSingleton<IHotkeyService, GlobalHotkeyService>();
         services.AddSingleton(provider => new TrayIcon(
             provider.GetRequiredService<MessageWindow>(),

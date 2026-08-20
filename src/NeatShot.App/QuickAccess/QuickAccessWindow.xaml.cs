@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using NeatShot.Core.Capture;
@@ -11,11 +12,14 @@ namespace NeatShot.QuickAccess;
 public partial class QuickAccessWindow : Window
 {
     private const int EdgeMargin = 8;
+    private const int StackGap = 4;
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(220));
 
     private readonly QuickAccessViewModel _viewModel;
     private readonly ScreenInfo _screen;
     private readonly DispatcherTimer _dismissTimer;
+    private nint _handle;
+    private int _slot;
     private Point _dragOrigin;
 
     public QuickAccessWindow(QuickAccessViewModel viewModel, ScreenInfo screen, TimeSpan timeout)
@@ -34,31 +38,44 @@ public partial class QuickAccessWindow : Window
         Thumbnail.PreviewMouseMove += OnThumbnailMouseMove;
     }
 
+    public void MoveToSlot(int slot)
+    {
+        _slot = slot;
+        if (_handle != 0)
+        {
+            WindowPlacement.MoveToPixels(_handle, SlotBounds(), topmost: true);
+        }
+    }
+
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-
-        var scale = _screen.ScaleFactor;
-        var width = (int)Math.Round(Width * scale);
-        var height = (int)Math.Round(ActualHeight * scale);
-        var margin = (int)Math.Round(EdgeMargin * scale);
-        var bounds = new PixelRect(
-            _screen.WorkArea.Right - width - margin,
-            _screen.WorkArea.Bottom - height - margin,
-            width,
-            height);
-
-        WindowPlacement.MoveToPixels(new WindowInteropHelper(this).Handle, bounds, topmost: true);
+        _handle = new WindowInteropHelper(this).Handle;
+        WindowPlacement.MoveToPixels(_handle, SlotBounds(), topmost: true);
         SlideIn();
         _dismissTimer.Start();
     }
 
+    private PixelRect SlotBounds()
+    {
+        var scale = _screen.ScaleFactor;
+        var width = (int)Math.Round(Width * scale);
+        var height = (int)Math.Round(Height * scale);
+        var margin = (int)Math.Round(EdgeMargin * scale);
+        var gap = (int)Math.Round(StackGap * scale);
+        return new PixelRect(
+            _screen.WorkArea.Left + margin,
+            _screen.WorkArea.Bottom - margin - height - _slot * (height + gap),
+            width,
+            height);
+    }
+
     private void SlideIn()
     {
-        var offset = new System.Windows.Media.TranslateTransform(Width, 0);
+        var offset = new TranslateTransform(-Width, 0);
         Card.RenderTransform = offset;
         offset.BeginAnimation(
-            System.Windows.Media.TranslateTransform.XProperty,
+            TranslateTransform.XProperty,
             new DoubleAnimation(0, SlideDuration) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
         BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, SlideDuration));
     }
