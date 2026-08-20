@@ -53,7 +53,7 @@
       <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding FileNamePattern, UpdateSourceTrigger=PropertyChanged}" />
 
       <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,6" Opacity="0.6" FontSize="12" TextWrapping="Wrap">
-        <Run Text="Tokens: {date} {time} {year} {month} {day} {hour} {minute} {second} — preview: " /><Run Text="{Binding FileNamePreview, Mode=OneWay}" />
+        <Run Text="Tokens: {date} {time} {year} {month} {day} {hour} {minute} {second}. Preview: " /><Run Text="{Binding FileNamePreview, Mode=OneWay}" />
       </TextBlock>
 
       <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource Label}" Text="Format" />
