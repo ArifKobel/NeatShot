@@ -4,10 +4,10 @@ public sealed record AppSettings
 {
     public static IReadOnlyDictionary<HotkeyAction, Hotkey> DefaultHotkeys { get; } = new Dictionary<HotkeyAction, Hotkey>
     {
-        [HotkeyAction.CaptureFullscreen] = Hotkey.Parse("Ctrl+Shift+1"),
-        [HotkeyAction.CaptureWindow] = Hotkey.Parse("Ctrl+Shift+2"),
-        [HotkeyAction.CaptureRegion] = Hotkey.Parse("Ctrl+Shift+3"),
-        [HotkeyAction.OpenLastCapture] = Hotkey.Parse("Ctrl+Shift+E"),
+        [HotkeyAction.CaptureFullscreen] = Hotkey.Parse("Alt+Shift+1"),
+        [HotkeyAction.CaptureWindow] = Hotkey.Parse("Alt+Shift+2"),
+        [HotkeyAction.CaptureRegion] = Hotkey.Parse("Alt+Shift+3"),
+        [HotkeyAction.OpenLastCapture] = Hotkey.Parse("Alt+Shift+E"),
     };
 
     public string SaveDirectory { get; init; } =

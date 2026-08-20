@@ -5,7 +5,7 @@ namespace NeatShot.Core.Tests.Settings;
 public class HotkeyTests
 {
     [Theory]
-    [InlineData("Ctrl+Shift+3", HotkeyModifiers.Control | HotkeyModifiers.Shift, 0x33)]
+    [InlineData("Alt+Shift+3", HotkeyModifiers.Alt | HotkeyModifiers.Shift, 0x33)]
     [InlineData("alt+f4", HotkeyModifiers.Alt, 0x73)]
     [InlineData("Win + PrintScreen", HotkeyModifiers.Windows, 0x2C)]
     [InlineData("A", HotkeyModifiers.None, 0x41)]
@@ -28,7 +28,7 @@ public class HotkeyTests
     }
 
     [Theory]
-    [InlineData("Ctrl+Shift+3")]
+    [InlineData("Alt+Shift+3")]
     [InlineData("Alt+F4")]
     [InlineData("Win+PrintScreen")]
     [InlineData("Ctrl+Alt+Shift+Win+Z")]
