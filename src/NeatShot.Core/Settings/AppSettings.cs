@@ -7,7 +7,7 @@ public sealed record AppSettings
         [HotkeyAction.CaptureFullscreen] = Hotkey.Parse("Alt+Shift+1"),
         [HotkeyAction.CaptureWindow] = Hotkey.Parse("Alt+Shift+2"),
         [HotkeyAction.CaptureRegion] = Hotkey.Parse("Alt+Shift+3"),
-        [HotkeyAction.OpenLastCapture] = Hotkey.Parse("Alt+Shift+E"),
+        [HotkeyAction.OpenLastCapture] = Hotkey.Parse("Alt+Shift+4"),
     };
 
     public string SaveDirectory { get; init; } =
