@@ -6,16 +6,37 @@ using NeatShot.Imaging;
 
 namespace NeatShot.Editor;
 
+public enum Handle
+{
+    None,
+    Body,
+    TopLeft,
+    Top,
+    TopRight,
+    Right,
+    BottomRight,
+    Bottom,
+    BottomLeft,
+    Left,
+    ArrowStart,
+    ArrowEnd,
+}
+
 public sealed partial class EditorViewModel : ObservableObject
 {
-    private const double DefaultFontSize = 24;
+    private const double DefaultFontSize = 22;
     private const double MinimumDragDistance = 2;
+    private const double MinimumShapeSize = 2;
+    private const double MinZoom = 0.1;
+    private const double MaxZoom = 8;
 
     private readonly Func<BitmapSource, string> _save;
     private readonly Func<BitmapSource, string?> _saveAs;
     private ImagePoint _dragStart;
-    private Annotation? _dragOrigin;
+    private Handle _activeHandle;
+    private IReadOnlyList<Annotation> _dragOrigins = [];
     private List<ImagePoint>? _strokePoints;
+    private bool _dragging;
 
     public EditorViewModel(
         AnnotationDocument document,
@@ -53,6 +74,8 @@ public sealed partial class EditorViewModel : ObservableObject
 
     public IReadOnlyList<double> StrokeWidths { get; } = [2, 4, 6, 10];
 
+    public string ImageSize => $"{Document.Image.Width} × {Document.Image.Height}";
+
     [ObservableProperty]
     public partial EditorTool ActiveTool { get; set; } = EditorTool.Arrow;
 
@@ -63,11 +86,18 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial double StrokeWidth { get; set; } = 4;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(DeleteSelectionCommand))]
-    public partial Annotation? Selected { get; private set; }
+    [NotifyPropertyChangedFor(nameof(HasSelection))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteSelectionCommand), nameof(DuplicateCommand), nameof(BringToFrontCommand), nameof(SendToBackCommand))]
+    public partial IReadOnlyList<Annotation> Selection { get; private set; } = [];
 
     [ObservableProperty]
     public partial Annotation? Preview { get; private set; }
+
+    [ObservableProperty]
+    public partial IReadOnlyDictionary<Guid, Annotation> Previews { get; private set; } = new Dictionary<Guid, Annotation>();
+
+    [ObservableProperty]
+    public partial ImageRect? Marquee { get; private set; }
 
     [ObservableProperty]
     public partial ImagePoint? PendingTextPosition { get; private set; }
@@ -75,18 +105,73 @@ public sealed partial class EditorViewModel : ObservableObject
     [ObservableProperty]
     public partial string? StatusMessage { get; private set; }
 
+    [ObservableProperty]
+    public partial double Zoom { get; set; } = 1;
+
+    [ObservableProperty]
+    public partial bool FitToWindow { get; set; } = true;
+
+    public bool HasSelection => Selection.Count > 0;
+
     public double FontSize => DefaultFontSize + StrokeWidth * 2;
 
-    public void PointerDown(ImagePoint point)
+    public Annotation? PrimarySelection => Selection.Count == 1 ? Selection[0] : null;
+
+    public Handle HitHandle(ImagePoint point, double tolerance)
+    {
+        if (PrimarySelection is not { } selected)
+        {
+            return Document.HitTest(point) is not null ? Handle.Body : Handle.None;
+        }
+
+        if (selected is ArrowAnnotation arrow)
+        {
+            if (point.DistanceTo(arrow.Start) <= tolerance)
+            {
+                return Handle.ArrowStart;
+            }
+
+            if (point.DistanceTo(arrow.End) <= tolerance)
+            {
+                return Handle.ArrowEnd;
+            }
+        }
+        else if (selected.CanResize)
+        {
+            foreach (var (handle, position) in HandlePositions(selected.Bounds))
+            {
+                if (point.DistanceTo(position) <= tolerance)
+                {
+                    return handle;
+                }
+            }
+        }
+
+        return Document.HitTest(point) is not null ? Handle.Body : Handle.None;
+    }
+
+    public static IEnumerable<(Handle Handle, ImagePoint Position)> HandlePositions(ImageRect bounds)
+    {
+        yield return (Handle.TopLeft, new ImagePoint(bounds.Left, bounds.Top));
+        yield return (Handle.Top, new ImagePoint(bounds.Center.X, bounds.Top));
+        yield return (Handle.TopRight, new ImagePoint(bounds.Right, bounds.Top));
+        yield return (Handle.Right, new ImagePoint(bounds.Right, bounds.Center.Y));
+        yield return (Handle.BottomRight, new ImagePoint(bounds.Right, bounds.Bottom));
+        yield return (Handle.Bottom, new ImagePoint(bounds.Center.X, bounds.Bottom));
+        yield return (Handle.BottomLeft, new ImagePoint(bounds.Left, bounds.Bottom));
+        yield return (Handle.Left, new ImagePoint(bounds.Left, bounds.Center.Y));
+    }
+
+    public void PointerDown(ImagePoint point, double handleTolerance, bool extendSelection)
     {
         _dragStart = point;
+        _dragging = true;
         Preview = null;
 
         switch (ActiveTool)
         {
             case EditorTool.Select:
-                Selected = Document.HitTest(point);
-                _dragOrigin = Selected;
+                BeginSelectDrag(point, handleTolerance, extendSelection);
                 break;
             case EditorTool.Freehand:
                 _strokePoints = [point];
@@ -103,10 +188,25 @@ public sealed partial class EditorViewModel : ObservableObject
 
     public void PointerMove(ImagePoint point)
     {
+        if (!_dragging)
+        {
+            return;
+        }
+
+        var dx = point.X - _dragStart.X;
+        var dy = point.Y - _dragStart.Y;
+
         switch (ActiveTool)
         {
-            case EditorTool.Select when _dragOrigin is not null:
-                Preview = _dragOrigin.Translate(point.X - _dragStart.X, point.Y - _dragStart.Y);
+            case EditorTool.Select when _activeHandle == Handle.Body:
+                Previews = _dragOrigins.ToDictionary(a => a.Id, a => a.Translate(dx, dy));
+                break;
+            case EditorTool.Select when _activeHandle != Handle.None && _dragOrigins.Count == 1:
+                var resized = Resize(_dragOrigins[0], _activeHandle, point);
+                Previews = new Dictionary<Guid, Annotation> { [resized.Id] = resized };
+                break;
+            case EditorTool.Select:
+                Marquee = ImageRect.FromPoints(_dragStart, point);
                 break;
             case EditorTool.Freehand when _strokePoints is not null:
                 _strokePoints.Add(point);
@@ -123,15 +223,20 @@ public sealed partial class EditorViewModel : ObservableObject
         }
     }
 
-    public void PointerUp(ImagePoint point)
+    public void PointerUp(ImagePoint point, bool extendSelection)
     {
+        if (!_dragging)
+        {
+            return;
+        }
+
+        _dragging = false;
         var moved = _dragStart.DistanceTo(point) >= MinimumDragDistance;
 
         switch (ActiveTool)
         {
-            case EditorTool.Select when _dragOrigin is not null && Preview is not null && moved:
-                Document.Execute(new ReplaceAnnotationCommand(_dragOrigin, Preview));
-                Selected = Preview;
+            case EditorTool.Select:
+                EndSelectDrag(moved, extendSelection);
                 break;
             case EditorTool.Freehand when _strokePoints is { Count: > 1 }:
                 Commit(new FreehandAnnotation(_strokePoints.ToArray(), CurrentStyle));
@@ -151,8 +256,24 @@ public sealed partial class EditorViewModel : ObservableObject
         }
 
         Preview = null;
-        _dragOrigin = null;
+        Previews = new Dictionary<Guid, Annotation>();
+        Marquee = null;
+        _dragOrigins = [];
+        _activeHandle = Handle.None;
         _strokePoints = null;
+    }
+
+    public void SelectAt(ImagePoint point)
+    {
+        var hit = Document.HitTest(point);
+        if (hit is null)
+        {
+            Selection = [];
+        }
+        else if (!Selection.Contains(hit))
+        {
+            Selection = [hit];
+        }
     }
 
     public void CommitText(string text, double width, double height)
@@ -168,7 +289,115 @@ public sealed partial class EditorViewModel : ObservableObject
 
     public void CancelText() => PendingTextPosition = null;
 
+    public void ZoomBy(double factor)
+    {
+        FitToWindow = false;
+        Zoom = Math.Clamp(Zoom * factor, MinZoom, MaxZoom);
+    }
+
     private AnnotationStyle CurrentStyle => new(Color, StrokeWidth);
+
+    private void BeginSelectDrag(ImagePoint point, double tolerance, bool extend)
+    {
+        _activeHandle = HitHandle(point, tolerance);
+
+        if (_activeHandle is not Handle.None and not Handle.Body)
+        {
+            _dragOrigins = [PrimarySelection!];
+            return;
+        }
+
+        var hit = Document.HitTest(point);
+        if (hit is null)
+        {
+            if (!extend)
+            {
+                Selection = [];
+            }
+
+            _activeHandle = Handle.None;
+            return;
+        }
+
+        if (extend)
+        {
+            Selection = Selection.Contains(hit) ? Selection.Where(a => a != hit).ToArray() : [.. Selection, hit];
+        }
+        else if (!Selection.Contains(hit))
+        {
+            Selection = [hit];
+        }
+
+        _activeHandle = Handle.Body;
+        _dragOrigins = Selection;
+    }
+
+    private void EndSelectDrag(bool moved, bool extend)
+    {
+        if (_activeHandle == Handle.None)
+        {
+            if (Marquee is { IsEmpty: false } marquee)
+            {
+                var inside = Annotations.Where(a => a.Bounds.IntersectsWith(marquee)).ToArray();
+                Selection = extend ? Selection.Union(inside).ToArray() : inside;
+            }
+
+            return;
+        }
+
+        if (!moved || Previews.Count == 0)
+        {
+            return;
+        }
+
+        var commands = _dragOrigins
+            .Where(origin => Previews.ContainsKey(origin.Id))
+            .Select(origin => (IEditCommand)new ReplaceAnnotationCommand(origin, Previews[origin.Id]))
+            .ToArray();
+        Document.Execute(new CompositeCommand(commands));
+        Selection = Selection.Select(a => Previews.TryGetValue(a.Id, out var updated) ? updated : a).ToArray();
+    }
+
+    private static Annotation Resize(Annotation origin, Handle handle, ImagePoint point)
+    {
+        if (origin is ArrowAnnotation arrow)
+        {
+            return handle switch
+            {
+                Handle.ArrowStart => arrow with { Start = point },
+                Handle.ArrowEnd => arrow with { End = point },
+                _ => arrow,
+            };
+        }
+
+        var b = origin.Bounds;
+        var left = b.Left;
+        var top = b.Top;
+        var right = b.Right;
+        var bottom = b.Bottom;
+
+        if (handle is Handle.TopLeft or Handle.Left or Handle.BottomLeft)
+        {
+            left = Math.Min(point.X, right - MinimumShapeSize);
+        }
+
+        if (handle is Handle.TopRight or Handle.Right or Handle.BottomRight)
+        {
+            right = Math.Max(point.X, left + MinimumShapeSize);
+        }
+
+        if (handle is Handle.TopLeft or Handle.Top or Handle.TopRight)
+        {
+            top = Math.Min(point.Y, bottom - MinimumShapeSize);
+        }
+
+        if (handle is Handle.BottomLeft or Handle.Bottom or Handle.BottomRight)
+        {
+            bottom = Math.Max(point.Y, top + MinimumShapeSize);
+        }
+
+        return origin.WithBounds(new ImageRect(left, top, right - left, bottom - top));
+    }
 
     private Annotation? CreateShape(ImagePoint from, ImagePoint to)
     {
@@ -188,7 +417,27 @@ public sealed partial class EditorViewModel : ObservableObject
     private void Commit(Annotation annotation)
     {
         Document.Execute(new AddAnnotationCommand(annotation));
-        Selected = null;
+        Selection = [];
+    }
+
+    private void Restyle(Func<Annotation, Annotation> change)
+    {
+        if (Selection.Count == 0)
+        {
+            return;
+        }
+
+        var pairs = Selection
+            .Select(a => (Before: a, After: change(a)))
+            .Where(p => !ReferenceEquals(p.Before, p.After))
+            .ToArray();
+        if (pairs.Length == 0)
+        {
+            return;
+        }
+
+        Document.Execute(new CompositeCommand(pairs.Select(p => (IEditCommand)new ReplaceAnnotationCommand(p.Before, p.After)).ToArray()));
+        Selection = Selection.Select(a => pairs.FirstOrDefault(p => p.Before == a).After ?? a).ToArray();
     }
 
     [RelayCommand]
@@ -197,7 +446,7 @@ public sealed partial class EditorViewModel : ObservableObject
         ActiveTool = tool;
         if (tool != EditorTool.Select)
         {
-            Selected = null;
+            Selection = [];
         }
     }
 
@@ -205,53 +454,21 @@ public sealed partial class EditorViewModel : ObservableObject
     private void SelectColor(Rgba color)
     {
         Color = color;
-        Restyle(annotation => annotation switch
-        {
-            RectangleAnnotation r => r with { Style = r.Style with { Color = color } },
-            EllipseAnnotation e => e with { Style = e.Style with { Color = color } },
-            ArrowAnnotation a => a with { Style = a.Style with { Color = color } },
-            FreehandAnnotation f => f with { Style = f.Style with { Color = color } },
-            TextAnnotation t => t with { Style = t.Style with { Color = color } },
-            CounterAnnotation c => c with { Style = c.Style with { Color = color } },
-            HighlightAnnotation h => h with { Color = color },
-            _ => annotation,
-        });
+        Restyle(a => a.WithColor(color));
     }
 
     [RelayCommand]
     private void SelectStrokeWidth(double width)
     {
         StrokeWidth = width;
-        Restyle(annotation => annotation switch
-        {
-            RectangleAnnotation r => r with { Style = r.Style with { StrokeWidth = width } },
-            EllipseAnnotation e => e with { Style = e.Style with { StrokeWidth = width } },
-            ArrowAnnotation a => a with { Style = a.Style with { StrokeWidth = width } },
-            FreehandAnnotation f => f with { Style = f.Style with { StrokeWidth = width } },
-            _ => annotation,
-        });
-    }
-
-    private void Restyle(Func<Annotation, Annotation> change)
-    {
-        if (Selected is null)
-        {
-            return;
-        }
-
-        var updated = change(Selected);
-        if (!ReferenceEquals(updated, Selected))
-        {
-            Document.Execute(new ReplaceAnnotationCommand(Selected, updated));
-            Selected = updated;
-        }
+        Restyle(a => a.WithStrokeWidth(width));
     }
 
     [RelayCommand(CanExecute = nameof(CanUndo))]
     private void Undo()
     {
         Document.Undo();
-        Selected = null;
+        Selection = [];
     }
 
     private bool CanUndo() => Document.CanUndo;
@@ -260,7 +477,7 @@ public sealed partial class EditorViewModel : ObservableObject
     private void Redo()
     {
         Document.Redo();
-        Selected = null;
+        Selection = [];
     }
 
     private bool CanRedo() => Document.CanRedo;
@@ -268,14 +485,77 @@ public sealed partial class EditorViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(HasSelection))]
     private void DeleteSelection()
     {
-        if (Selected is { } selected)
-        {
-            Document.Execute(new RemoveAnnotationCommand(selected));
-            Selected = null;
-        }
+        Document.Execute(new CompositeCommand(Selection.Select(a => (IEditCommand)new RemoveAnnotationCommand(a)).ToArray()));
+        Selection = [];
     }
 
-    private bool HasSelection() => Selected is not null;
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void Duplicate()
+    {
+        var copies = Selection.Select(a => a.Duplicate().Translate(12, 12)).ToArray();
+        Document.Execute(new CompositeCommand(copies.Select(a => (IEditCommand)new AddAnnotationCommand(a)).ToArray()));
+        Selection = copies;
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void BringToFront()
+    {
+        var commands = Selection.Select(a => (IEditCommand)new ReorderAnnotationCommand(a, Annotations.Count - 1)).ToArray();
+        Document.Execute(new CompositeCommand(commands));
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void SendToBack()
+    {
+        var commands = Selection.Reverse().Select(a => (IEditCommand)new ReorderAnnotationCommand(a, 0)).ToArray();
+        Document.Execute(new CompositeCommand(commands));
+    }
+
+    [RelayCommand]
+    private void SelectAll()
+    {
+        ActiveTool = EditorTool.Select;
+        Selection = Annotations.ToArray();
+    }
+
+    [RelayCommand]
+    private void Deselect() => Selection = [];
+
+    [RelayCommand]
+    private void Nudge(string direction)
+    {
+        var (dx, dy) = direction switch
+        {
+            "left" => (-1, 0),
+            "right" => (1, 0),
+            "up" => (0, -1),
+            _ => (0, 1),
+        };
+        if (Selection.Count == 0)
+        {
+            return;
+        }
+
+        var pairs = Selection.Select(a => (Before: a, After: a.Translate(dx, dy))).ToArray();
+        Document.Execute(new CompositeCommand(pairs.Select(p => (IEditCommand)new ReplaceAnnotationCommand(p.Before, p.After)).ToArray()));
+        Selection = pairs.Select(p => p.After).ToArray();
+    }
+
+    [RelayCommand]
+    private void ZoomIn() => ZoomBy(1.25);
+
+    [RelayCommand]
+    private void ZoomOut() => ZoomBy(0.8);
+
+    [RelayCommand]
+    private void ZoomToActual()
+    {
+        FitToWindow = false;
+        Zoom = 1;
+    }
+
+    [RelayCommand]
+    private void ZoomToFit() => FitToWindow = true;
 
     [RelayCommand]
     private void Copy()

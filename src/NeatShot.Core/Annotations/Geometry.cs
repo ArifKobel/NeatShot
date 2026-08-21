@@ -47,6 +47,9 @@ public readonly record struct ImageRect(double X, double Y, double Width, double
     public bool Contains(ImagePoint point) =>
         point.X >= Left && point.X <= Right && point.Y >= Top && point.Y <= Bottom;
 
+    public bool IntersectsWith(ImageRect other) =>
+        other.Left <= Right && Left <= other.Right && other.Top <= Bottom && Top <= other.Bottom;
+
     public ImageRect Translate(double dx, double dy) => this with { X = X + dx, Y = Y + dy };
 
     public ImageRect Inflate(double amount) =>

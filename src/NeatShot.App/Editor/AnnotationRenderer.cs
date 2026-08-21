@@ -15,10 +15,13 @@ public sealed class AnnotationRenderer
     private const int CacheLimit = 64;
     private const double ArrowHeadLength = 4;
     private const double ArrowHeadWidth = 2.2;
+    private const double HandleSize = 8;
     private const byte HighlightAlpha = 0x70;
 
-    private static readonly Typeface TextTypeface = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
-    private static readonly Pen SelectionPen = Frozen(new Pen(new SolidColorBrush(Color.FromRgb(0x0A, 0x84, 0xFF)), 1) { DashStyle = DashStyles.Dash });
+    private static readonly Color AccentColor = Color.FromRgb(0x0A, 0x84, 0xFF);
+    private static readonly Typeface TextTypeface = new(new FontFamily("Segoe UI Variable Text, Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
+    private static readonly Brush HandleFill = Frozen(Brushes.White);
+    private static readonly Brush MarqueeFill = Frozen(new SolidColorBrush(Color.FromArgb(0x22, 0x0A, 0x84, 0xFF)));
 
     private readonly CapturedImage _image;
     private readonly Dictionary<ObscureAnnotation, BitmapSource> _obscureCache = [];
@@ -31,7 +34,7 @@ public sealed class AnnotationRenderer
 
     public double PixelsPerDip { get; set; } = 1;
 
-    public void Draw(DrawingContext context, IEnumerable<Annotation> annotations, Annotation? selected = null)
+    public void Draw(DrawingContext context, IEnumerable<Annotation> annotations)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(annotations);
@@ -40,17 +43,50 @@ public sealed class AnnotationRenderer
         {
             Draw(context, annotation);
         }
+    }
 
-        if (selected is not null)
+    public static void DrawSelection(DrawingContext context, IReadOnlyList<Annotation> selection, double scale)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(selection);
+
+        var outline = new Pen(new SolidColorBrush(AccentColor), 1 / scale) { DashStyle = DashStyles.Dash };
+        var handlePen = new Pen(new SolidColorBrush(AccentColor), 1.5 / scale);
+        var handleRadius = HandleSize / 2 / scale;
+
+        foreach (var annotation in selection)
         {
-            context.DrawRectangle(null, SelectionPen, ToRect(selected.Bounds.Inflate(4)));
+            if (annotation is ArrowAnnotation arrow)
+            {
+                context.DrawEllipse(HandleFill, handlePen, ToPoint(arrow.Start), handleRadius, handleRadius);
+                context.DrawEllipse(HandleFill, handlePen, ToPoint(arrow.End), handleRadius, handleRadius);
+                continue;
+            }
+
+            context.DrawRectangle(null, outline, ToRect(annotation.Bounds.Inflate(2 / scale)));
+            if (selection.Count == 1 && annotation.CanResize)
+            {
+                foreach (var (_, position) in EditorViewModel.HandlePositions(annotation.Bounds))
+                {
+                    var p = ToPoint(position);
+                    context.DrawRectangle(HandleFill, handlePen, new Rect(p.X - handleRadius, p.Y - handleRadius, handleRadius * 2, handleRadius * 2));
+                }
+            }
         }
     }
 
-    public static Size MeasureText(string text, double fontSize, double pixelsPerDip) =>
-        new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, TextTypeface, fontSize, Brushes.Black, pixelsPerDip) is var formatted
-            ? new Size(formatted.WidthIncludingTrailingWhitespace, formatted.Height)
-            : Size.Empty;
+    public static void DrawMarquee(DrawingContext context, ImageRect marquee, double scale)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        var pen = new Pen(new SolidColorBrush(AccentColor), 1 / scale) { DashStyle = DashStyles.Dash };
+        context.DrawRectangle(MarqueeFill, pen, ToRect(marquee));
+    }
+
+    public static Size MeasureText(string text, double fontSize, double pixelsPerDip)
+    {
+        var formatted = new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, TextTypeface, fontSize, Brushes.Black, pixelsPerDip);
+        return new Size(formatted.WidthIncludingTrailingWhitespace, formatted.Height);
+    }
 
     private void Draw(DrawingContext context, Annotation annotation)
     {
@@ -149,8 +185,8 @@ public sealed class AnnotationRenderer
             PixelsPerDip);
 
         var origin = ToPoint(text.Position);
-        var outline = formatted.BuildGeometry(origin);
-        context.DrawGeometry(null, new Pen(Brushes.Black, Math.Max(1, text.FontSize / 12)) { LineJoin = PenLineJoin.Round, Brush = new SolidColorBrush(Color.FromArgb(0x90, 0, 0, 0)) }, outline);
+        var shadow = new SolidColorBrush(Color.FromArgb(0x70, 0, 0, 0));
+        context.DrawGeometry(null, new Pen(shadow, Math.Max(1, text.FontSize / 14)) { LineJoin = PenLineJoin.Round }, formatted.BuildGeometry(origin));
         context.DrawText(formatted, origin);
     }
 
