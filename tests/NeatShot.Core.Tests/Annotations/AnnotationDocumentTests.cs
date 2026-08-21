@@ -114,6 +114,36 @@ public class AnnotationDocumentTests
         Assert.Equal(4, document.NextCounterNumber);
     }
 
+    [Fact]
+    public void ReorderCommand_MovesToFrontAndBack()
+    {
+        var document = CreateDocument();
+        var first = new RectangleAnnotation(new ImageRect(0, 0, 10, 10), Style);
+        var second = new RectangleAnnotation(new ImageRect(20, 20, 10, 10), Style);
+        document.Execute(new AddAnnotationCommand(first));
+        document.Execute(new AddAnnotationCommand(second));
+
+        document.Execute(new ReorderAnnotationCommand(first, 1));
+        Assert.Equal([second, first], document.Annotations);
+
+        document.Undo();
+        Assert.Equal([first, second], document.Annotations);
+    }
+
+    [Fact]
+    public void CompositeCommand_UndoesAllStepsInReverse()
+    {
+        var document = CreateDocument();
+        var a = new RectangleAnnotation(new ImageRect(0, 0, 10, 10), Style);
+        var b = new RectangleAnnotation(new ImageRect(5, 5, 10, 10), Style);
+
+        document.Execute(new CompositeCommand([new AddAnnotationCommand(a), new AddAnnotationCommand(b)]));
+        Assert.Equal(2, document.Annotations.Count);
+
+        document.Undo();
+        Assert.Empty(document.Annotations);
+    }
+
     private static AnnotationDocument CreateDocument() =>
         new(new CapturedImage(100, 100, new byte[100 * 100 * CapturedImage.BytesPerPixel]));
 }

@@ -70,6 +70,21 @@ public sealed class AnnotationDocument
         return index;
     }
 
+    internal int Move(Guid id, int targetIndex)
+    {
+        var index = _annotations.FindIndex(a => a.Id == id);
+        if (index < 0)
+        {
+            throw new InvalidOperationException("Annotation is not part of the document.");
+        }
+
+        var annotation = _annotations[index];
+        _annotations.RemoveAt(index);
+        _annotations.Insert(Math.Clamp(targetIndex, 0, _annotations.Count), annotation);
+        Changed?.Invoke(this, EventArgs.Empty);
+        return index;
+    }
+
     internal void Replace(Annotation annotation)
     {
         var index = _annotations.FindIndex(a => a.Id == annotation.Id);

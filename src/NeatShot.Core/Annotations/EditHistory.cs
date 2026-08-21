@@ -111,3 +111,48 @@ public sealed class ReplaceAnnotationCommand : IEditCommand
 
     public void Undo(AnnotationDocument document) => document.Replace(_before);
 }
+
+public sealed class ReorderAnnotationCommand : IEditCommand
+{
+    private readonly Guid _id;
+    private readonly int _targetIndex;
+    private int _sourceIndex;
+
+    public ReorderAnnotationCommand(Annotation annotation, int targetIndex)
+    {
+        ArgumentNullException.ThrowIfNull(annotation);
+        _id = annotation.Id;
+        _targetIndex = targetIndex;
+    }
+
+    public void Execute(AnnotationDocument document) => _sourceIndex = document.Move(_id, _targetIndex);
+
+    public void Undo(AnnotationDocument document) => document.Move(_id, _sourceIndex);
+}
+
+public sealed class CompositeCommand : IEditCommand
+{
+    private readonly IReadOnlyList<IEditCommand> _commands;
+
+    public CompositeCommand(IReadOnlyList<IEditCommand> commands)
+    {
+        ArgumentNullException.ThrowIfNull(commands);
+        _commands = commands;
+    }
+
+    public void Execute(AnnotationDocument document)
+    {
+        foreach (var command in _commands)
+        {
+            command.Execute(document);
+        }
+    }
+
+    public void Undo(AnnotationDocument document)
+    {
+        for (var i = _commands.Count - 1; i >= 0; i--)
+        {
+            _commands[i].Undo(document);
+        }
+    }
+}
