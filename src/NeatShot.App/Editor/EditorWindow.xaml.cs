@@ -18,6 +18,7 @@ public partial class EditorWindow : Window
 
         viewModel.CloseRequested += (_, _) => Close();
         Loaded += (_, _) => Surface.Focus();
+        Surface.ContextMenuOpening += (_, e) => e.Handled = _viewModel.PendingTextPosition is not null;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
         TextEntry.KeyDown += OnTextInputKeyDown;
         TextEntry.LostFocus += (_, _) => CommitText();

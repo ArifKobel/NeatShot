@@ -7,38 +7,57 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance editor:EditorViewModel}"
         Title="NeatShot"
-        Width="1100"
-        Height="760"
-        MinWidth="720"
-        MinHeight="480"
+        Width="1180"
+        Height="800"
+        MinWidth="820"
+        MinHeight="520"
         WindowStartupLocation="CenterScreen"
-        Background="#1B1B20">
+        FontFamily="Segoe UI Variable Text, Segoe UI"
+        Background="#1C1C21">
   <Window.Resources>
     <editor:ToolToBoolConverter x:Key="ToolToBool" />
     <editor:RgbaToBrushConverter x:Key="RgbaToBrush" />
     <editor:EqualityConverter x:Key="Equality" />
+    <editor:PercentConverter x:Key="Percent" />
+
+    <SolidColorBrush x:Key="ToolbarBrush" Color="#26262C" />
+    <SolidColorBrush x:Key="TextBrush" Color="#ECECF1" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#8F8F9A" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#0A84FF" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="DividerBrush" Color="#2EFFFFFF" />
+
+    <Style x:Key="Glyph" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
 
     <Style x:Key="ToolButton" TargetType="RadioButton">
       <Setter Property="Focusable" Value="False" />
-      <Setter Property="Width" Value="40" />
-      <Setter Property="Height" Value="36" />
-      <Setter Property="Margin" Value="2,0" />
+      <Setter Property="Width" Value="52" />
+      <Setter Property="Height" Value="50" />
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Foreground" Value="#E8E8EC" />
-      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI Symbol" />
-      <Setter Property="FontSize" Value="16" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="Chrome" Background="Transparent" CornerRadius="6">
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Border x:Name="Chrome" Background="Transparent" CornerRadius="8" Margin="1,0">
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="Icon" Style="{StaticResource Glyph}" Text="{TemplateBinding Content}" />
+                <TextBlock x:Name="Label" Text="{TemplateBinding Tag}" FontSize="10.5" Margin="0,4,0,0"
+                           HorizontalAlignment="Center" Foreground="{StaticResource MutedBrush}" />
+              </StackPanel>
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Chrome" Property="Background" Value="#22FFFFFF" />
+                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource HoverBrush}" />
               </Trigger>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="Chrome" Property="Background" Value="#0A84FF" />
+                <Setter TargetName="Chrome" Property="Background" Value="#2A0A84FF" />
+                <Setter TargetName="Icon" Property="Foreground" Value="{StaticResource AccentBrush}" />
+                <Setter TargetName="Label" Property="Foreground" Value="{StaticResource TextBrush}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -48,25 +67,45 @@
 
     <Style x:Key="IconButton" TargetType="Button">
       <Setter Property="Focusable" Value="False" />
-      <Setter Property="Width" Value="40" />
-      <Setter Property="Height" Value="36" />
-      <Setter Property="Margin" Value="2,0" />
+      <Setter Property="Width" Value="38" />
+      <Setter Property="Height" Value="34" />
       <Setter Property="Cursor" Value="Hand" />
-      <Setter Property="Foreground" Value="#E8E8EC" />
-      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets, Segoe UI Symbol" />
-      <Setter Property="FontSize" Value="16" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Chrome" Background="Transparent" CornerRadius="6">
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Border x:Name="Chrome" Background="Transparent" CornerRadius="7" Margin="1,0">
+              <TextBlock Style="{StaticResource Glyph}" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Chrome" Property="Background" Value="#22FFFFFF" />
+                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource HoverBrush}" />
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Foreground" Value="#55E8E8EC" />
+                <Setter Property="Foreground" Value="#4DECECF1" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="PrimaryButton" TargetType="Button">
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="Height" Value="34" />
+      <Setter Property="Padding" Value="16,0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Chrome" Background="{StaticResource AccentBrush}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+              <ContentPresenter VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="#3396FF" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -76,20 +115,20 @@
 
     <Style x:Key="Swatch" TargetType="RadioButton">
       <Setter Property="Focusable" Value="False" />
-      <Setter Property="Width" Value="22" />
-      <Setter Property="Height" Value="22" />
-      <Setter Property="Margin" Value="2,0" />
+      <Setter Property="Width" Value="24" />
+      <Setter Property="Height" Value="24" />
+      <Setter Property="Margin" Value="1,0" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
             <Grid>
-              <Ellipse x:Name="Ring" Stroke="Transparent" StrokeThickness="2" Margin="0" />
-              <Ellipse Fill="{Binding Converter={StaticResource RgbaToBrush}}" Margin="4" />
+              <Ellipse x:Name="Ring" Stroke="Transparent" StrokeThickness="2" />
+              <Ellipse Fill="{Binding Converter={StaticResource RgbaToBrush}}" Margin="5" />
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="Ring" Property="Stroke" Value="#E8E8EC" />
+                <Setter TargetName="Ring" Property="Stroke" Value="{StaticResource TextBrush}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -97,106 +136,166 @@
       </Setter>
     </Style>
 
-    <Style x:Key="Separator" TargetType="Rectangle">
-      <Setter Property="Width" Value="1" />
-      <Setter Property="Height" Value="22" />
-      <Setter Property="Margin" Value="8,0" />
-      <Setter Property="Fill" Value="#33FFFFFF" />
+    <Style x:Key="SizeButton" TargetType="RadioButton">
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="Width" Value="28" />
+      <Setter Property="Height" Value="28" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Chrome" Background="Transparent" CornerRadius="6">
+              <Ellipse Fill="{StaticResource TextBrush}" Width="{Binding}" Height="{Binding}" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource HoverBrush}" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="#2A0A84FF" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
+
+    <Style x:Key="Divider" TargetType="Rectangle">
+      <Setter Property="Width" Value="1" />
+      <Setter Property="Height" Value="28" />
+      <Setter Property="Margin" Value="10,0" />
+      <Setter Property="Fill" Value="{StaticResource DividerBrush}" />
+    </Style>
+
+    <Style x:Key="StatusText" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <ContextMenu x:Key="CanvasMenu">
+      <MenuItem Header="Delete" InputGestureText="Del" Command="{Binding DeleteSelectionCommand}" />
+      <MenuItem Header="Duplicate" InputGestureText="Ctrl+D" Command="{Binding DuplicateCommand}" />
+      <Separator />
+      <MenuItem Header="Bring to front" Command="{Binding BringToFrontCommand}" />
+      <MenuItem Header="Send to back" Command="{Binding SendToBackCommand}" />
+      <Separator />
+      <MenuItem Header="Select all" InputGestureText="Ctrl+A" Command="{Binding SelectAllCommand}" />
+      <Separator />
+      <MenuItem Header="Copy image" InputGestureText="Ctrl+C" Command="{Binding CopyCommand}" />
+      <MenuItem Header="Save" InputGestureText="Ctrl+S" Command="{Binding SaveCommand}" />
+    </ContextMenu>
   </Window.Resources>
 
   <DockPanel>
-    <Border DockPanel.Dock="Top" Background="#232329" Padding="10,6" BorderBrush="#33000000" BorderThickness="0,0,0,1">
-      <DockPanel LastChildFill="False">
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Select (V)" Content="&#xE7C9;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Select}}" />
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Arrow (A)" Content="&#xE72A;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Arrow}}" />
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Rectangle (R)" Content="&#xE739;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Rectangle}}" />
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Ellipse (O)" Content="&#xEA3A;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Ellipse}}" />
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Pen (P)" Content="&#xE70F;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Freehand}}" />
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Text (T)" Content="&#xE8D2;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Text}}" />
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Counter (N)" Content="&#xE8EF;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Counter}}" />
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Highlight (H)" Content="&#xE7E6;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Highlight}}" />
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Blur (B)" Content="&#xE9A9;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Blur}}" />
-          <RadioButton Style="{StaticResource ToolButton}" ToolTip="Pixelate" Content="&#xE80A;"
-                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Pixelate}}" />
+    <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBrush}" Padding="14,8" BorderBrush="#33000000" BorderThickness="0,0,0,1">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-          <Rectangle Style="{StaticResource Separator}" />
-
-          <ItemsControl ItemsSource="{Binding Palette}" VerticalAlignment="Center">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <StackPanel Orientation="Horizontal" />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <RadioButton Style="{StaticResource Swatch}" GroupName="Palette"
-                             Command="{Binding DataContext.SelectColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                             CommandParameter="{Binding}">
-                  <RadioButton.IsChecked>
-                    <MultiBinding Converter="{StaticResource Equality}" Mode="OneWay">
-                      <Binding />
-                      <Binding Path="DataContext.Color" RelativeSource="{RelativeSource AncestorType=Window}" />
-                    </MultiBinding>
-                  </RadioButton.IsChecked>
-                </RadioButton>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-
-          <Rectangle Style="{StaticResource Separator}" />
-
-          <ItemsControl ItemsSource="{Binding StrokeWidths}" VerticalAlignment="Center">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <StackPanel Orientation="Horizontal" />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <RadioButton Style="{StaticResource ToolButton}" Width="30" GroupName="Stroke"
-                             Command="{Binding DataContext.SelectStrokeWidthCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                             CommandParameter="{Binding}">
-                  <RadioButton.IsChecked>
-                    <MultiBinding Converter="{StaticResource Equality}" Mode="OneWay">
-                      <Binding />
-                      <Binding Path="DataContext.StrokeWidth" RelativeSource="{RelativeSource AncestorType=Window}" />
-                    </MultiBinding>
-                  </RadioButton.IsChecked>
-                  <Ellipse Fill="#E8E8EC" Width="{Binding}" Height="{Binding}" />
-                </RadioButton>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </StackPanel>
-
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
           <Button Style="{StaticResource IconButton}" ToolTip="Undo (Ctrl+Z)" Content="&#xE7A7;" Command="{Binding UndoCommand}" />
           <Button Style="{StaticResource IconButton}" ToolTip="Redo (Ctrl+Y)" Content="&#xE7A6;" Command="{Binding RedoCommand}" />
-          <Rectangle Style="{StaticResource Separator}" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Select" ToolTip="Select (V)" Content="&#xE7C9;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Select}}" />
+          <Rectangle Style="{StaticResource Divider}" />
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Arrow" ToolTip="Arrow (A)" Content="&#xE72A;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Arrow}}" />
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Rectangle" ToolTip="Rectangle (R)" Content="&#xE739;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Rectangle}}" />
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Ellipse" ToolTip="Ellipse (O)" Content="&#xEA3A;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Ellipse}}" />
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Pen" ToolTip="Pen (P)" Content="&#xE70F;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Freehand}}" />
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Text" ToolTip="Text (T)" Content="&#xE8D2;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Text}}" />
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Counter" ToolTip="Counter (N)" Content="&#xE8EF;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Counter}}" />
+          <Rectangle Style="{StaticResource Divider}" />
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Highlight" ToolTip="Highlight (H)" Content="&#xE7E6;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Highlight}}" />
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Blur" ToolTip="Blur (B)" Content="&#xE9A9;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Blur}}" />
+          <RadioButton Style="{StaticResource ToolButton}" Tag="Pixelate" ToolTip="Pixelate" Content="&#xE80A;"
+                       IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Pixelate}}" />
+          <Rectangle Style="{StaticResource Divider}" />
+
+          <StackPanel VerticalAlignment="Center">
+            <ItemsControl ItemsSource="{Binding Palette}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <RadioButton Style="{StaticResource Swatch}" GroupName="Palette"
+                               Command="{Binding DataContext.SelectColorCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                               CommandParameter="{Binding}">
+                    <RadioButton.IsChecked>
+                      <MultiBinding Converter="{StaticResource Equality}" Mode="OneWay">
+                        <Binding />
+                        <Binding Path="DataContext.Color" RelativeSource="{RelativeSource AncestorType=Window}" />
+                      </MultiBinding>
+                    </RadioButton.IsChecked>
+                  </RadioButton>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ItemsControl ItemsSource="{Binding StrokeWidths}" Margin="0,2,0,0" HorizontalAlignment="Center">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <RadioButton Style="{StaticResource SizeButton}" GroupName="Stroke"
+                               Command="{Binding DataContext.SelectStrokeWidthCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                               CommandParameter="{Binding}">
+                    <RadioButton.IsChecked>
+                      <MultiBinding Converter="{StaticResource Equality}" Mode="OneWay">
+                        <Binding />
+                        <Binding Path="DataContext.StrokeWidth" RelativeSource="{RelativeSource AncestorType=Window}" />
+                      </MultiBinding>
+                    </RadioButton.IsChecked>
+                  </RadioButton>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
           <Button Style="{StaticResource IconButton}" ToolTip="Copy (Ctrl+C)" Content="&#xE8C8;" Command="{Binding CopyCommand}" />
-          <Button Style="{StaticResource IconButton}" ToolTip="Save (Ctrl+S)" Content="&#xE74E;" Command="{Binding SaveCommand}" />
           <Button Style="{StaticResource IconButton}" ToolTip="Save as (Ctrl+Shift+S)" Content="&#xE792;" Command="{Binding SaveAsCommand}" />
+          <Button Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Content="Save" ToolTip="Save (Ctrl+S)" Command="{Binding SaveCommand}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border DockPanel.Dock="Bottom" Background="{StaticResource ToolbarBrush}" Padding="14,0" Height="30" BorderBrush="#33000000" BorderThickness="0,1,0,0">
+      <DockPanel LastChildFill="False">
+        <TextBlock DockPanel.Dock="Left" Style="{StaticResource StatusText}" Text="{Binding ImageSize}" />
+        <TextBlock DockPanel.Dock="Left" Style="{StaticResource StatusText}" Margin="16,0,0,0" Text="{Binding StatusMessage}" />
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+          <Button Style="{StaticResource IconButton}" Height="26" Width="30" Content="&#xE71F;" ToolTip="Zoom out (Ctrl+-)" Command="{Binding ZoomOutCommand}" />
+          <TextBlock Style="{StaticResource StatusText}" Width="44" TextAlignment="Center" Text="{Binding Zoom, Converter={StaticResource Percent}}" />
+          <Button Style="{StaticResource IconButton}" Height="26" Width="30" Content="&#xE8A3;" ToolTip="Zoom in (Ctrl++)" Command="{Binding ZoomInCommand}" />
+          <Button Style="{StaticResource IconButton}" Height="26" Width="30" Content="&#xE9A6;" ToolTip="Fit (Ctrl+0)" Command="{Binding ZoomToFitCommand}" />
+          <Button Style="{StaticResource IconButton}" Height="26" Width="30" Content="&#xE8A9;" ToolTip="Actual size (Ctrl+1)" Command="{Binding ZoomToActualCommand}" />
         </StackPanel>
       </DockPanel>
     </Border>
 
-    <Border DockPanel.Dock="Bottom" Background="#232329" Padding="12,4" BorderBrush="#33000000" BorderThickness="0,1,0,0">
-      <TextBlock Foreground="#9A9AA3" FontSize="12" Text="{Binding StatusMessage}" />
-    </Border>
-
-    <Grid Margin="12">
-      <editor:EditorCanvas x:Name="Surface" ViewModel="{Binding}" Focusable="True">
+    <Grid>
+      <editor:EditorCanvas x:Name="Surface" ViewModel="{Binding}" Focusable="True" ContextMenu="{StaticResource CanvasMenu}">
         <editor:EditorCanvas.InputBindings>
           <KeyBinding Modifiers="Ctrl" Key="Z" Command="{Binding UndoCommand}" />
           <KeyBinding Modifiers="Ctrl" Key="Y" Command="{Binding RedoCommand}" />
@@ -204,7 +303,21 @@
           <KeyBinding Modifiers="Ctrl" Key="C" Command="{Binding CopyCommand}" />
           <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding SaveCommand}" />
           <KeyBinding Modifiers="Ctrl+Shift" Key="S" Command="{Binding SaveAsCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding SelectAllCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="D" Command="{Binding DuplicateCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="OemPlus" Command="{Binding ZoomInCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="Add" Command="{Binding ZoomInCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="OemMinus" Command="{Binding ZoomOutCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="Subtract" Command="{Binding ZoomOutCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="D0" Command="{Binding ZoomToFitCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="D1" Command="{Binding ZoomToActualCommand}" />
           <KeyBinding Key="Delete" Command="{Binding DeleteSelectionCommand}" />
+          <KeyBinding Key="Back" Command="{Binding DeleteSelectionCommand}" />
+          <KeyBinding Key="Escape" Command="{Binding DeselectCommand}" />
+          <KeyBinding Key="Left" Command="{Binding NudgeCommand}" CommandParameter="left" />
+          <KeyBinding Key="Right" Command="{Binding NudgeCommand}" CommandParameter="right" />
+          <KeyBinding Key="Up" Command="{Binding NudgeCommand}" CommandParameter="up" />
+          <KeyBinding Key="Down" Command="{Binding NudgeCommand}" CommandParameter="down" />
           <KeyBinding Key="V" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static editor:EditorTool.Select}" />
           <KeyBinding Key="A" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static editor:EditorTool.Arrow}" />
           <KeyBinding Key="R" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static editor:EditorTool.Rectangle}" />
@@ -221,10 +334,11 @@
                  Visibility="Collapsed"
                  IsHitTestVisible="True"
                  MinWidth="80"
-                 Background="#CC1B1B20"
-                 Foreground="#E8E8EC"
-                 BorderBrush="#0A84FF"
-                 FontFamily="Segoe UI"
+                 Padding="4,2"
+                 Background="#CC1C1C21"
+                 Foreground="{StaticResource TextBrush}"
+                 BorderBrush="{StaticResource AccentBrush}"
+                 FontFamily="Segoe UI Variable Text, Segoe UI"
                  FontWeight="SemiBold"
                  AcceptsReturn="False" />
       </Canvas>
