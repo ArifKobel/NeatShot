@@ -64,7 +64,7 @@ public sealed class GdiScreenCapture : IScreenCapture
                 screenDc,
                 bounds.X,
                 bounds.Y,
-                ROP_CODE.SRCCOPY | ROP_CODE.CAPTUREBLT);
+                ROP_CODE.SRCCOPY);
 
             if (!copied)
             {
