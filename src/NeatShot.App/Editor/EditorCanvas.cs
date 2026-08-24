@@ -14,10 +14,19 @@ public sealed class EditorCanvas : FrameworkElement
         typeof(EditorCanvas),
         new PropertyMetadata(null, OnViewModelChanged));
 
-    private static readonly DrawingBrush CheckerBrush = CreateCheckerBrush();
+    private const double HandleTolerance = 8;
+    private const double WheelZoomStep = 1.1;
+    private const double FitPadding = 24;
+
+    private static readonly Brush Background = Frozen(new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x2B)));
+    private static readonly Brush ImageShadow = Frozen(new SolidColorBrush(Color.FromArgb(0x80, 0, 0, 0)));
 
     private double _scale = 1;
-    private Point _offset;
+    private Vector _pan;
+    private Point _panOrigin;
+    private Vector _panStart;
+    private bool _panning;
+    private bool _spaceHeld;
 
     public EditorViewModel? ViewModel
     {
@@ -27,7 +36,17 @@ public sealed class EditorCanvas : FrameworkElement
 
     public double Scale => _scale;
 
-    public Point ImageToCanvas(ImagePoint point) => new(_offset.X + point.X * _scale, _offset.Y + point.Y * _scale);
+    public Point ImageToCanvas(ImagePoint point)
+    {
+        var offset = Offset();
+        return new Point(offset.X + point.X * _scale, offset.Y + point.Y * _scale);
+    }
+
+    public ImagePoint CanvasToImage(Point point)
+    {
+        var offset = Offset();
+        return new ImagePoint((point.X - offset.X) / _scale, (point.Y - offset.Y) / _scale);
+    }
 
     protected override void OnRender(DrawingContext drawingContext)
     {
@@ -37,18 +56,35 @@ public sealed class EditorCanvas : FrameworkElement
         }
 
         var image = ViewModel.Document.Image;
-        UpdateLayoutMetrics(image.Width, image.Height);
+        UpdateScale(image.Width, image.Height);
+        var offset = Offset();
 
-        drawingContext.DrawRectangle(CheckerBrush, null, new Rect(RenderSize));
-        drawingContext.PushTransform(new MatrixTransform(_scale, 0, 0, _scale, _offset.X, _offset.Y));
+        drawingContext.DrawRectangle(Background, null, new Rect(RenderSize));
+        drawingContext.DrawRoundedRectangle(ImageShadow, null, new Rect(offset.X - 2, offset.Y + 2, image.Width * _scale + 4, image.Height * _scale + 4), 3, 3);
+        drawingContext.PushTransform(new MatrixTransform(_scale, 0, 0, _scale, offset.X, offset.Y));
 
         drawingContext.DrawImage(ViewModel.Bitmap, new Rect(0, 0, image.Width, image.Height));
         ViewModel.Renderer.PixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
-        var annotations = ViewModel.Preview is { } preview
-            ? ViewModel.Annotations.Where(a => a.Id != preview.Id).Append(preview)
-            : ViewModel.Annotations;
-        ViewModel.Renderer.Draw(drawingContext, annotations, ViewModel.Selected);
+        var previews = ViewModel.Previews;
+        var annotations = ViewModel.Annotations.Select(a => previews.TryGetValue(a.Id, out var p) ? p : a);
+        if (ViewModel.Preview is { } preview)
+        {
+            annotations = annotations.Append(preview);
+        }
+
+        ViewModel.Renderer.Draw(drawingContext, annotations);
+
+        if (ViewModel.Selection.Count > 0)
+        {
+            var selection = ViewModel.Selection.Select(a => previews.TryGetValue(a.Id, out var p) ? p : a).ToArray();
+            AnnotationRenderer.DrawSelection(drawingContext, selection, _scale);
+        }
+
+        if (ViewModel.Marquee is { } marquee)
+        {
+            AnnotationRenderer.DrawMarquee(drawingContext, marquee, _scale);
+        }
 
         drawingContext.Pop();
     }
@@ -64,25 +100,134 @@ public sealed class EditorCanvas : FrameworkElement
         base.OnMouseLeftButtonDown(e);
         Focus();
         CaptureMouse();
-        ViewModel?.PointerDown(ToImage(e.GetPosition(this)));
+
+        if (_spaceHeld)
+        {
+            BeginPan(e.GetPosition(this));
+            return;
+        }
+
+        var extend = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+        ViewModel?.PointerDown(CanvasToImage(e.GetPosition(this)), HandleTolerance / _scale, extend);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
+        var position = e.GetPosition(this);
+
+        if (_panning)
+        {
+            _pan = _panStart + (position - _panOrigin);
+            InvalidateVisual();
+            return;
+        }
+
         if (e.LeftButton == MouseButtonState.Pressed && IsMouseCaptured)
         {
-            ViewModel?.PointerMove(ToImage(e.GetPosition(this)));
+            ViewModel?.PointerMove(CanvasToImage(position));
+        }
+        else
+        {
+            UpdateCursor(position);
         }
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonUp(e);
-        if (IsMouseCaptured)
+        if (!IsMouseCaptured)
         {
+            return;
+        }
+
+        ReleaseMouseCapture();
+        if (_panning)
+        {
+            _panning = false;
+            return;
+        }
+
+        ViewModel?.PointerUp(CanvasToImage(e.GetPosition(this)), Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
+    }
+
+    protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
+    {
+        base.OnMouseRightButtonDown(e);
+        Focus();
+        if (ViewModel is null)
+        {
+            return;
+        }
+
+        ViewModel.ActiveTool = EditorTool.Select;
+        ViewModel.SelectAt(CanvasToImage(e.GetPosition(this)));
+    }
+
+    protected override void OnMouseDown(MouseButtonEventArgs e)
+    {
+        base.OnMouseDown(e);
+        if (e.ChangedButton == MouseButton.Middle)
+        {
+            CaptureMouse();
+            BeginPan(e.GetPosition(this));
+            e.Handled = true;
+        }
+    }
+
+    protected override void OnMouseUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseUp(e);
+        if (e.ChangedButton == MouseButton.Middle && _panning)
+        {
+            _panning = false;
             ReleaseMouseCapture();
-            ViewModel?.PointerUp(ToImage(e.GetPosition(this)));
+        }
+    }
+
+    protected override void OnMouseWheel(MouseWheelEventArgs e)
+    {
+        base.OnMouseWheel(e);
+        if (ViewModel is null)
+        {
+            return;
+        }
+
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            var anchor = CanvasToImage(e.GetPosition(this));
+            ViewModel.ZoomBy(e.Delta > 0 ? WheelZoomStep : 1 / WheelZoomStep);
+            UpdateScale(ViewModel.Document.Image.Width, ViewModel.Document.Image.Height);
+            var moved = ImageToCanvas(anchor);
+            _pan += e.GetPosition(this) - moved;
+        }
+        else
+        {
+            _pan += Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? new Vector(e.Delta, 0) : new Vector(0, e.Delta);
+        }
+
+        InvalidateVisual();
+        e.Handled = true;
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (e.Key == Key.Space)
+        {
+            _spaceHeld = true;
+            Cursor = Cursors.ScrollAll;
+            e.Handled = true;
+        }
+    }
+
+    protected override void OnKeyUp(KeyEventArgs e)
+    {
+        base.OnKeyUp(e);
+        if (e.Key == Key.Space)
+        {
+            _spaceHeld = false;
+            UpdateCursor(Mouse.GetPosition(this));
         }
     }
 
@@ -102,40 +247,89 @@ public sealed class EditorCanvas : FrameworkElement
         canvas.InvalidateVisual();
     }
 
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e) => InvalidateVisual();
-
-    private void UpdateLayoutMetrics(int imageWidth, int imageHeight)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        var available = RenderSize;
-        if (available.Width <= 0 || available.Height <= 0)
+        if (e.PropertyName is nameof(EditorViewModel.FitToWindow) && ViewModel?.FitToWindow == true)
+        {
+            _pan = default;
+        }
+
+        if (e.PropertyName is nameof(EditorViewModel.ActiveTool))
+        {
+            UpdateCursor(Mouse.GetPosition(this));
+        }
+
+        InvalidateVisual();
+    }
+
+    private void BeginPan(Point position)
+    {
+        _panning = true;
+        _panOrigin = position;
+        _panStart = _pan;
+    }
+
+    private void UpdateScale(int imageWidth, int imageHeight)
+    {
+        if (ViewModel is null || RenderSize.Width <= 0 || RenderSize.Height <= 0)
         {
             return;
         }
 
-        _scale = Math.Min(1, Math.Min(available.Width / imageWidth, available.Height / imageHeight));
-        _offset = new Point(
-            Math.Floor((available.Width - imageWidth * _scale) / 2),
-            Math.Floor((available.Height - imageHeight * _scale) / 2));
+        if (ViewModel.FitToWindow)
+        {
+            _scale = Math.Min(1, Math.Min((RenderSize.Width - FitPadding * 2) / imageWidth, (RenderSize.Height - FitPadding * 2) / imageHeight));
+            ViewModel.Zoom = _scale;
+        }
+        else
+        {
+            _scale = ViewModel.Zoom;
+        }
     }
 
-    private ImagePoint ToImage(Point point) => new((point.X - _offset.X) / _scale, (point.Y - _offset.Y) / _scale);
-
-    private static DrawingBrush CreateCheckerBrush()
+    private Point Offset()
     {
-        var light = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x30));
-        var dark = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x27));
-        var group = new DrawingGroup();
-        group.Children.Add(new GeometryDrawing(dark, null, new RectangleGeometry(new Rect(0, 0, 16, 16))));
-        group.Children.Add(new GeometryDrawing(light, null, new RectangleGeometry(new Rect(0, 0, 8, 8))));
-        group.Children.Add(new GeometryDrawing(light, null, new RectangleGeometry(new Rect(8, 8, 8, 8))));
+        var image = ViewModel!.Document.Image;
+        return new Point(
+            Math.Round((RenderSize.Width - image.Width * _scale) / 2 + _pan.X),
+            Math.Round((RenderSize.Height - image.Height * _scale) / 2 + _pan.Y));
+    }
 
-        var brush = new DrawingBrush(group)
+    private void UpdateCursor(Point position)
+    {
+        if (ViewModel is null)
         {
-            TileMode = TileMode.Tile,
-            Viewport = new Rect(0, 0, 16, 16),
-            ViewportUnits = BrushMappingMode.Absolute,
+            return;
+        }
+
+        if (_spaceHeld)
+        {
+            Cursor = Cursors.ScrollAll;
+            return;
+        }
+
+        if (ViewModel.ActiveTool != EditorTool.Select)
+        {
+            Cursor = ViewModel.ActiveTool == EditorTool.Text ? Cursors.IBeam : Cursors.Cross;
+            return;
+        }
+
+        Cursor = ViewModel.HitHandle(CanvasToImage(position), HandleTolerance / _scale) switch
+        {
+            Handle.TopLeft or Handle.BottomRight => Cursors.SizeNWSE,
+            Handle.TopRight or Handle.BottomLeft => Cursors.SizeNESW,
+            Handle.Top or Handle.Bottom => Cursors.SizeNS,
+            Handle.Left or Handle.Right => Cursors.SizeWE,
+            Handle.ArrowStart or Handle.ArrowEnd => Cursors.Cross,
+            Handle.Body => Cursors.SizeAll,
+            _ => Cursors.Arrow,
         };
-        brush.Freeze();
-        return brush;
+    }
+
+    private static T Frozen<T>(T freezable)
+        where T : Freezable
+    {
+        freezable.Freeze();
+        return freezable;
     }
 }
