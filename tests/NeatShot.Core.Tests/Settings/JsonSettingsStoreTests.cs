@@ -28,7 +28,6 @@ public sealed class JsonSettingsStoreTests : IDisposable
             CopyToClipboard = false,
             SaveToDisk = false,
             LaunchAtStartup = true,
-            QuickAccessTimeout = TimeSpan.FromSeconds(3),
             Hotkeys = new Dictionary<HotkeyAction, Hotkey>
             {
                 [HotkeyAction.CaptureRegion] = Hotkey.Parse("Alt+F9"),
@@ -44,7 +43,6 @@ public sealed class JsonSettingsStoreTests : IDisposable
         Assert.Equal(settings.CopyToClipboard, loaded.CopyToClipboard);
         Assert.Equal(settings.SaveToDisk, loaded.SaveToDisk);
         Assert.Equal(settings.LaunchAtStartup, loaded.LaunchAtStartup);
-        Assert.Equal(settings.QuickAccessTimeout, loaded.QuickAccessTimeout);
         Assert.Equal(Hotkey.Parse("Alt+F9"), loaded.Hotkeys[HotkeyAction.CaptureRegion]);
     }
 

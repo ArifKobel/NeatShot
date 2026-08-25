@@ -23,7 +23,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         CopyToClipboard = current.CopyToClipboard;
         SaveToDisk = current.SaveToDisk;
         LaunchAtStartup = current.LaunchAtStartup;
-        QuickAccessSeconds = current.QuickAccessTimeout.TotalSeconds;
         Hotkeys =
         [
             new HotkeyEntry(HotkeyAction.CaptureRegion, "Capture region", current.Hotkeys[HotkeyAction.CaptureRegion]),
@@ -61,9 +60,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     public partial bool LaunchAtStartup { get; set; }
 
     [ObservableProperty]
-    public partial double QuickAccessSeconds { get; set; }
-
-    [ObservableProperty]
     public partial string? Error { get; private set; }
 
     [RelayCommand]
@@ -99,7 +95,6 @@ public sealed partial class SettingsViewModel : ObservableObject
             CopyToClipboard = CopyToClipboard,
             SaveToDisk = SaveToDisk,
             LaunchAtStartup = LaunchAtStartup,
-            QuickAccessTimeout = TimeSpan.FromSeconds(QuickAccessSeconds),
             Hotkeys = hotkeys,
         });
 
@@ -120,11 +115,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(FileNamePattern))
         {
             return "The file name pattern must not be empty.";
-        }
-
-        if (QuickAccessSeconds is < 1 or > 60)
-        {
-            return "Quick access timeout must be between 1 and 60 seconds.";
         }
 
         var missing = Hotkeys.FirstOrDefault(entry => entry.Hotkey is null);

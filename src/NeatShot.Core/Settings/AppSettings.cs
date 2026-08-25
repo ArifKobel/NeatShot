@@ -23,7 +23,5 @@ public sealed record AppSettings
 
     public bool LaunchAtStartup { get; init; }
 
-    public TimeSpan QuickAccessTimeout { get; init; } = TimeSpan.FromSeconds(8);
-
     public IReadOnlyDictionary<HotkeyAction, Hotkey> Hotkeys { get; init; } = DefaultHotkeys;
 }

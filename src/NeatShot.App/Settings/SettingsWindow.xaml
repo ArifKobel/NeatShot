@@ -64,11 +64,6 @@
     <TextBlock Style="{StaticResource SectionHeader}" Text="After capture" />
     <CheckBox Content="Copy image to clipboard" IsChecked="{Binding CopyToClipboard}" />
     <CheckBox Content="Save image to disk automatically" IsChecked="{Binding SaveToDisk}" />
-    <StackPanel Orientation="Horizontal" Margin="0,4">
-      <TextBlock Style="{StaticResource Label}" Text="Hide quick access after" />
-      <TextBox Width="48" Text="{Binding QuickAccessSeconds, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Center" />
-      <TextBlock Style="{StaticResource Label}" Margin="8,0,0,0" Text="seconds" />
-    </StackPanel>
 
     <TextBlock Style="{StaticResource SectionHeader}" Text="Shortcuts" />
     <ItemsControl ItemsSource="{Binding Hotkeys}">
