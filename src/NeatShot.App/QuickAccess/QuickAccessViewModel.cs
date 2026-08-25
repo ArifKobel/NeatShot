@@ -9,6 +9,8 @@ namespace NeatShot.QuickAccess;
 
 public sealed partial class QuickAccessViewModel : ObservableObject
 {
+    private static readonly TimeSpan ConfirmationDuration = TimeSpan.FromMilliseconds(650);
+
     private readonly ImageFileWriter _fileWriter;
     private readonly Action<Core.Capture.Capture> _openEditor;
 
@@ -36,9 +38,10 @@ public sealed partial class QuickAccessViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
     public partial string? FilePath { get; private set; }
 
-    public bool IsSaved => FilePath is not null;
+    [ObservableProperty]
+    public partial string? Confirmation { get; private set; }
 
-    public string Dimensions => $"{Capture.Image.Width} × {Capture.Image.Height}";
+    public bool IsSaved => FilePath is not null;
 
     public string EnsureFile()
     {
@@ -51,16 +54,17 @@ public sealed partial class QuickAccessViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Copy()
+    private Task CopyAsync()
     {
         ClipboardImageService.SetImage(Bitmap);
-        Dismiss();
+        return ConfirmAndDismissAsync("Copied");
     }
 
     [RelayCommand(CanExecute = nameof(CanSave))]
-    private void Save()
+    private Task SaveAsync()
     {
         EnsureFile();
+        return ConfirmAndDismissAsync("Saved");
     }
 
     private bool CanSave() => !IsSaved;
@@ -81,4 +85,11 @@ public sealed partial class QuickAccessViewModel : ObservableObject
 
     [RelayCommand]
     private void Dismiss() => Dismissed?.Invoke(this, EventArgs.Empty);
+
+    private async Task ConfirmAndDismissAsync(string message)
+    {
+        Confirmation = message;
+        await Task.Delay(ConfirmationDuration);
+        Dismiss();
+    }
 }

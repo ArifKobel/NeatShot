@@ -3,7 +3,6 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
 using NeatShot.Core.Capture;
 using NeatShot.Platform.Windows;
 
@@ -11,40 +10,43 @@ namespace NeatShot.QuickAccess;
 
 public partial class QuickAccessWindow : Window
 {
-    private const int EdgeMargin = 8;
-    private const int StackGap = 4;
+    private const int EdgeMargin = 6;
+    private const int SwipeAwayZone = 40;
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(220));
 
     private readonly QuickAccessViewModel _viewModel;
-    private readonly DispatcherTimer _dismissTimer;
+    private readonly ICursorLocator _cursor;
     private ScreenInfo _screen;
     private nint _handle;
-    private int _slot;
     private Point _dragOrigin;
 
-    public QuickAccessWindow(QuickAccessViewModel viewModel, ScreenInfo screen, TimeSpan timeout)
+    public QuickAccessWindow(QuickAccessViewModel viewModel, ScreenInfo screen, ICursorLocator cursor)
     {
         InitializeComponent();
         DataContext = viewModel;
         _viewModel = viewModel;
         _screen = screen;
-        _dismissTimer = new DispatcherTimer { Interval = timeout };
-        _dismissTimer.Tick += (_, _) => Close();
+        _cursor = cursor;
 
         viewModel.Dismissed += (_, _) => Close();
-        MouseEnter += (_, _) => _dismissTimer.Stop();
-        MouseLeave += (_, _) => _dismissTimer.Start();
-        Thumbnail.PreviewMouseLeftButtonDown += (_, e) => _dragOrigin = e.GetPosition(this);
-        Thumbnail.PreviewMouseMove += OnThumbnailMouseMove;
+        Card.SizeChanged += (_, e) => CardClip.Rect = new Rect(e.NewSize);
+        Card.PreviewMouseLeftButtonDown += OnCardMouseDown;
+        Card.PreviewMouseMove += OnCardMouseMove;
     }
 
-    public void Place(ScreenInfo screen, int slot)
+    public int PixelHeight => (int)Math.Round((Card.Height + Root.Margin.Top + Root.Margin.Bottom) * _screen.ScaleFactor);
+
+    public void Place(ScreenInfo screen, int bottom)
     {
         _screen = screen;
-        _slot = slot;
+        var scale = screen.ScaleFactor;
+        var width = (int)Math.Round((Card.Width + Root.Margin.Left + Root.Margin.Right) * scale);
+        var height = PixelHeight;
+        var left = screen.WorkArea.Left + (int)Math.Round((EdgeMargin - Root.Margin.Left) * scale);
+
         if (_handle != 0)
         {
-            WindowPlacement.MoveToPixels(_handle, SlotBounds(), topmost: true);
+            WindowPlacement.MoveToPixels(_handle, new PixelRect(left, bottom - height, width, height), topmost: true);
         }
     }
 
@@ -52,36 +54,30 @@ public partial class QuickAccessWindow : Window
     {
         base.OnSourceInitialized(e);
         _handle = new WindowInteropHelper(this).Handle;
-        WindowPlacement.MoveToPixels(_handle, SlotBounds(), topmost: true);
+        WindowPlacement.DisableTransitions(_handle);
         SlideIn();
-        _dismissTimer.Start();
-    }
-
-    private PixelRect SlotBounds()
-    {
-        var scale = _screen.ScaleFactor;
-        var width = (int)Math.Round(Width * scale);
-        var height = (int)Math.Round(Height * scale);
-        var margin = (int)Math.Round(EdgeMargin * scale);
-        var gap = (int)Math.Round(StackGap * scale);
-        return new PixelRect(
-            _screen.WorkArea.Left + margin,
-            _screen.WorkArea.Bottom - margin - height - _slot * (height + gap),
-            width,
-            height);
     }
 
     private void SlideIn()
     {
-        var offset = new TranslateTransform(-Width, 0);
-        Card.RenderTransform = offset;
+        var offset = new TranslateTransform(-Card.Width, 0);
+        Root.RenderTransform = offset;
         offset.BeginAnimation(
             TranslateTransform.XProperty,
             new DoubleAnimation(0, SlideDuration) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
-        BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, SlideDuration));
     }
 
-    private void OnThumbnailMouseMove(object sender, MouseEventArgs e)
+    private void OnCardMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        _dragOrigin = e.GetPosition(this);
+        if (e.ClickCount == 2)
+        {
+            _viewModel.EditCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    private void OnCardMouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed)
         {
@@ -97,6 +93,11 @@ public partial class QuickAccessWindow : Window
 
         var data = new DataObject(DataFormats.FileDrop, new[] { _viewModel.EnsureFile() });
         data.SetImage(_viewModel.Bitmap);
-        DragDrop.DoDragDrop(Thumbnail, data, DragDropEffects.Copy);
+        DragDrop.DoDragDrop(Card, data, DragDropEffects.Copy);
+
+        if (_cursor.GetPosition().X < _screen.WorkArea.Left + SwipeAwayZone * _screen.ScaleFactor)
+        {
+            Close();
+        }
     }
 }

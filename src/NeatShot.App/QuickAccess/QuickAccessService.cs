@@ -1,6 +1,5 @@
 using System.Windows.Threading;
 using NeatShot.Core.Capture;
-using NeatShot.Core.Settings;
 using NeatShot.Export;
 
 namespace NeatShot.QuickAccess;
@@ -8,21 +7,24 @@ namespace NeatShot.QuickAccess;
 public sealed class QuickAccessService
 {
     private const int MaxStacked = 4;
+    private const int StackGap = 2;
+    private const int EdgeMargin = 6;
     private static readonly TimeSpan FollowInterval = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan FollowDelay = TimeSpan.FromMilliseconds(1500);
 
     private readonly IScreenProvider _screens;
     private readonly ICursorLocator _cursor;
-    private readonly SettingsManager _settings;
     private readonly ImageFileWriter _fileWriter;
     private readonly List<QuickAccessWindow> _windows = [];
     private readonly DispatcherTimer _follow;
     private ScreenInfo? _screen;
+    private ScreenInfo? _candidate;
+    private DateTime _candidateSince;
 
-    public QuickAccessService(IScreenProvider screens, ICursorLocator cursor, SettingsManager settings, ImageFileWriter fileWriter)
+    public QuickAccessService(IScreenProvider screens, ICursorLocator cursor, ImageFileWriter fileWriter)
     {
         _screens = screens;
         _cursor = cursor;
-        _settings = settings;
         _fileWriter = fileWriter;
         _follow = new DispatcherTimer { Interval = FollowInterval };
         _follow.Tick += (_, _) => FollowCursor();
@@ -41,7 +43,7 @@ public sealed class QuickAccessService
 
         _screen = ActiveScreen();
         var viewModel = new QuickAccessViewModel(capture, filePath, _fileWriter, c => EditRequested?.Invoke(this, c));
-        var window = new QuickAccessWindow(viewModel, _screen, _settings.Current.QuickAccessTimeout);
+        var window = new QuickAccessWindow(viewModel, _screen, _cursor);
         window.Closed += (sender, _) =>
         {
             _windows.Remove((QuickAccessWindow)sender!);
@@ -63,9 +65,23 @@ public sealed class QuickAccessService
         }
 
         var active = ActiveScreen();
-        if (active != _screen)
+        if (active == _screen)
+        {
+            _candidate = null;
+            return;
+        }
+
+        if (active != _candidate)
+        {
+            _candidate = active;
+            _candidateSince = DateTime.UtcNow;
+            return;
+        }
+
+        if (DateTime.UtcNow - _candidateSince >= FollowDelay)
         {
             _screen = active;
+            _candidate = null;
             Restack();
         }
     }
@@ -81,9 +97,16 @@ public sealed class QuickAccessService
 
     private void Restack()
     {
-        for (var i = 0; i < _windows.Count; i++)
+        if (_screen is null)
         {
-            _windows[i].Place(_screen!, _windows.Count - 1 - i);
+            return;
+        }
+
+        var bottom = _screen.WorkArea.Bottom - (int)Math.Round(EdgeMargin * _screen.ScaleFactor);
+        for (var i = _windows.Count - 1; i >= 0; i--)
+        {
+            _windows[i].Place(_screen, bottom);
+            bottom -= _windows[i].PixelHeight + StackGap;
         }
     }
 }

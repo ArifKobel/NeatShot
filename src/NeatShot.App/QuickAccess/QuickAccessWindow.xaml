@@ -7,40 +7,35 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance quickAccess:QuickAccessViewModel}"
         Title="NeatShot"
-        Width="300"
-        Height="236"
+        SizeToContent="WidthAndHeight"
         WindowStyle="None"
         ResizeMode="NoResize"
         AllowsTransparency="True"
         Background="Transparent"
         ShowInTaskbar="False"
         ShowActivated="False"
-        Topmost="True">
+        Topmost="True"
+        FontFamily="Segoe UI Variable Text, Segoe UI">
   <Window.Resources>
+    <quickAccess:NullToVisibilityConverter x:Key="NullToVisibility" />
+
     <Style x:Key="ActionButton" TargetType="Button">
-      <Setter Property="Width" Value="36" />
-      <Setter Property="Height" Value="32" />
-      <Setter Property="Padding" Value="0" />
+      <Setter Property="Width" Value="32" />
+      <Setter Property="Height" Value="30" />
+      <Setter Property="Focusable" Value="False" />
       <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
-      <Setter Property="FontSize" Value="15" />
+      <Setter Property="FontSize" Value="14" />
       <Setter Property="Foreground" Value="#F2F2F5" />
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="0" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Chrome"
-                    Background="{TemplateBinding Background}"
-                    CornerRadius="6">
+            <Border x:Name="Chrome" Background="Transparent" CornerRadius="6">
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
                 <Setter TargetName="Chrome" Property="Background" Value="#33FFFFFF" />
-              </Trigger>
-              <Trigger Property="IsPressed" Value="True">
-                <Setter TargetName="Chrome" Property="Background" Value="#22FFFFFF" />
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Foreground" Value="#66F2F2F5" />
@@ -50,54 +45,99 @@
         </Setter.Value>
       </Setter>
     </Style>
+
+    <Style x:Key="CloseButton" TargetType="Button">
+      <Setter Property="Width" Value="22" />
+      <Setter Property="Height" Value="22" />
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="9" />
+      <Setter Property="Foreground" Value="#F2F2F5" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid>
+              <Ellipse x:Name="Chrome" Fill="#E61E1E24" Stroke="#66FFFFFF" StrokeThickness="1" />
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Chrome" Property="Fill" Value="#FF3A3A42" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
   </Window.Resources>
 
-  <Border x:Name="Card"
-          Margin="12"
-          Background="#F01E1E24"
-          CornerRadius="10"
-          BorderBrush="#40FFFFFF"
-          BorderThickness="1">
-    <Border.Effect>
-      <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.45" />
-    </Border.Effect>
-    <Grid>
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
-      </Grid.RowDefinitions>
+  <Grid x:Name="Root" Margin="14">
+    <Border x:Name="Card"
+            Width="250"
+            Height="160"
+            Background="#1E1E24"
+            CornerRadius="8"
+            BorderBrush="#59FFFFFF"
+            BorderThickness="1"
+            Cursor="Hand">
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="16" ShadowDepth="3" Opacity="0.5" />
+      </Border.Effect>
+      <Border.Clip>
+        <RectangleGeometry x:Name="CardClip" RadiusX="8" RadiusY="8" />
+      </Border.Clip>
+      <Grid>
+        <Image Source="{Binding Bitmap}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
 
-      <Border x:Name="Thumbnail"
-              Grid.Row="0"
-              Margin="8,8,8,0"
-              Height="160"
-              Background="#111114"
-              CornerRadius="6"
-              Cursor="SizeAll"
-              ClipToBounds="True">
-        <Image Source="{Binding Bitmap}"
-               Stretch="Uniform"
-               RenderOptions.BitmapScalingMode="HighQuality" />
-      </Border>
+        <Border x:Name="Actions"
+                VerticalAlignment="Bottom"
+                Background="#D91A1A20"
+                Padding="4,2"
+                Opacity="0">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Style="{StaticResource ActionButton}" ToolTip="Copy" Content="&#xE8C8;" Command="{Binding CopyCommand}" />
+            <Button Style="{StaticResource ActionButton}" ToolTip="Save" Content="&#xE74E;" Command="{Binding SaveCommand}" />
+            <Button Style="{StaticResource ActionButton}" ToolTip="Show in folder" Content="&#xE838;" Command="{Binding RevealInExplorerCommand}" />
+            <Button Style="{StaticResource ActionButton}" ToolTip="Annotate" Content="&#xE70F;" Command="{Binding EditCommand}" />
+          </StackPanel>
+        </Border>
 
-      <DockPanel Grid.Row="1" Margin="8,6,8,8" LastChildFill="False">
-        <TextBlock DockPanel.Dock="Left"
-                   VerticalAlignment="Center"
-                   Margin="6,0,0,0"
-                   Foreground="#A0F2F2F5"
-                   FontSize="12"
-                   Text="{Binding Dimensions}" />
-        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Close"
-                Content="&#xE711;" Command="{Binding DismissCommand}" />
-        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Edit"
-                Content="&#xE70F;" Command="{Binding EditCommand}" />
-        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Show in folder"
-                Content="&#xE838;" Command="{Binding RevealInExplorerCommand}" />
-        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Save"
-                Content="&#xE74E;" Command="{Binding SaveCommand}" />
-        <Button DockPanel.Dock="Right" Style="{StaticResource ActionButton}" ToolTip="Copy to clipboard"
-                Content="&#xE8C8;" Command="{Binding CopyCommand}" />
-      </DockPanel>
-    </Grid>
-  </Border>
+        <Border Background="#CC1A1A20" Visibility="{Binding Confirmation, Converter={StaticResource NullToVisibility}}">
+          <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="22" Foreground="#F2F2F5" HorizontalAlignment="Center" Text="&#xE73E;" />
+            <TextBlock Margin="0,6,0,0" FontSize="12" Foreground="#F2F2F5" HorizontalAlignment="Center" Text="{Binding Confirmation}" />
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+
+    <Button x:Name="Dismiss"
+            Style="{StaticResource CloseButton}"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Margin="-8,-8,0,0"
+            Opacity="0"
+            Content="&#xE711;"
+            Command="{Binding DismissCommand}" />
+
+    <Grid.Triggers>
+      <EventTrigger RoutedEvent="MouseEnter">
+        <BeginStoryboard>
+          <Storyboard>
+            <DoubleAnimation Storyboard.TargetName="Actions" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12" />
+            <DoubleAnimation Storyboard.TargetName="Dismiss" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12" />
+          </Storyboard>
+        </BeginStoryboard>
+      </EventTrigger>
+      <EventTrigger RoutedEvent="MouseLeave">
+        <BeginStoryboard>
+          <Storyboard>
+            <DoubleAnimation Storyboard.TargetName="Actions" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12" />
+            <DoubleAnimation Storyboard.TargetName="Dismiss" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12" />
+          </Storyboard>
+        </BeginStoryboard>
+      </EventTrigger>
+    </Grid.Triggers>
+  </Grid>
 </Window>
