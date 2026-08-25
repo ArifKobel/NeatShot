@@ -10,49 +10,87 @@ namespace NeatShot.Overlay;
 
 public partial class OverlayWindow : Window
 {
-    private readonly OverlayViewModel _viewModel;
-    private readonly ScreenInfo _screen;
+    private const int FramesBeforeReveal = 2;
 
-    public OverlayWindow(OverlayViewModel viewModel, ScreenInfo screen, BitmapSource backdrop)
+    private readonly nint _handle;
+    private OverlayViewModel? _viewModel;
+    private int _framesUntilReveal;
+
+    public OverlayWindow(ScreenInfo screen)
     {
         InitializeComponent();
-        _viewModel = viewModel;
-        _screen = screen;
-        Backdrop.Source = backdrop;
+        Screen = screen;
+        Left = screen.Bounds.X / screen.ScaleFactor;
+        Top = screen.Bounds.Y / screen.ScaleFactor;
+        Width = screen.Bounds.Width / screen.ScaleFactor;
+        Height = screen.Bounds.Height / screen.ScaleFactor;
+
+        _handle = new WindowInteropHelper(this).EnsureHandle();
+        WindowPlacement.DisableTransitions(_handle);
     }
 
-    protected override void OnSourceInitialized(EventArgs e)
+    public ScreenInfo Screen { get; }
+
+    public void Present(OverlayViewModel viewModel, BitmapSource backdrop)
     {
-        base.OnSourceInitialized(e);
-        var handle = new WindowInteropHelper(this).Handle;
-        WindowPlacement.MoveToPixels(handle, _screen.Bounds, topmost: true);
-        Canvas.Attach(_viewModel, _screen.Bounds, VisualTreeHelper.GetDpi(this).DpiScaleX);
+        _viewModel = viewModel;
+        Backdrop.Source = backdrop;
+        Canvas.Attach(viewModel, Screen.Bounds, VisualTreeHelper.GetDpi(this).DpiScaleX);
+
+        WindowPlacement.SetCloaked(_handle, true);
+        WindowPlacement.MoveToPixels(_handle, Screen.Bounds, topmost: true);
+        Show();
+        RevealOncePainted();
+    }
+
+    public void Dismiss()
+    {
+        CompositionTarget.Rendering -= OnFrameRendered;
+        Hide();
+        Backdrop.Source = null;
+    }
+
+    private void RevealOncePainted()
+    {
+        _framesUntilReveal = FramesBeforeReveal;
+        CompositionTarget.Rendering += OnFrameRendered;
+    }
+
+    private void OnFrameRendered(object? sender, EventArgs e)
+    {
+        if (--_framesUntilReveal > 0)
+        {
+            return;
+        }
+
+        CompositionTarget.Rendering -= OnFrameRendered;
+        WindowPlacement.SetCloaked(_handle, false);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        _viewModel.MoveCursor(CursorPixel(e));
+        _viewModel?.MoveCursor(CursorPixel(e));
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonDown(e);
         CaptureMouse();
-        _viewModel.BeginDrag(CursorPixel(e));
+        _viewModel?.BeginDrag(CursorPixel(e));
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonUp(e);
         ReleaseMouseCapture();
-        _viewModel.EndDrag(CursorPixel(e));
+        _viewModel?.EndDrag(CursorPixel(e));
     }
 
     protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseRightButtonUp(e);
-        _viewModel.Cancel();
+        _viewModel?.Cancel();
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -61,11 +99,11 @@ public partial class OverlayWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                _viewModel.Cancel();
+                _viewModel?.Cancel();
                 break;
             case Key.Enter:
             case Key.Space:
-                _viewModel.Confirm();
+                _viewModel?.Confirm();
                 break;
         }
     }

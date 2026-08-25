@@ -1,3 +1,5 @@
+using System.Windows;
+using System.Windows.Media.Imaging;
 using NeatShot.Core.Capture;
 using NeatShot.Imaging;
 
@@ -6,27 +8,35 @@ namespace NeatShot.Overlay;
 public sealed class OverlayService
 {
     private readonly IScreenProvider _screens;
-    private readonly IWindowEnumerator _windows;
+    private readonly IWindowEnumerator _windowEnumerator;
+    private readonly Dictionary<string, OverlayWindow> _overlays = [];
 
     public OverlayService(IScreenProvider screens, IWindowEnumerator windows)
     {
         _screens = screens;
-        _windows = windows;
+        _windowEnumerator = windows;
+    }
+
+    public void Prepare()
+    {
+        foreach (var screen in _screens.GetScreens())
+        {
+            OverlayFor(screen);
+        }
     }
 
     public async Task<PixelRect?> SelectRegionAsync(CapturedImage frozenDesktop, PixelRect desktopBounds, CaptureMode mode)
     {
         ArgumentNullException.ThrowIfNull(frozenDesktop);
 
-        var windows = mode == CaptureMode.Fullscreen ? [] : _windows.GetVisibleWindows();
+        var windows = mode == CaptureMode.Fullscreen ? [] : _windowEnumerator.GetVisibleWindows();
         var viewModel = new OverlayViewModel(mode, windows);
-        var overlays = _screens.GetScreens()
-            .Select(screen => CreateWindow(viewModel, screen, frozenDesktop, desktopBounds))
-            .ToList();
+        var desktop = frozenDesktop.ToBitmapSource();
+        var overlays = _screens.GetScreens().Select(OverlayFor).ToList();
 
         foreach (var overlay in overlays)
         {
-            overlay.Show();
+            overlay.Present(viewModel, Slice(desktop, overlay.Screen.Bounds.Offset(-desktopBounds.X, -desktopBounds.Y)));
         }
 
         overlays[0].Activate();
@@ -39,14 +49,29 @@ public sealed class OverlayService
         {
             foreach (var overlay in overlays)
             {
-                overlay.Close();
+                overlay.Dismiss();
             }
         }
     }
 
-    private static OverlayWindow CreateWindow(OverlayViewModel viewModel, ScreenInfo screen, CapturedImage desktop, PixelRect desktopBounds)
+    private OverlayWindow OverlayFor(ScreenInfo screen)
     {
-        var backdrop = desktop.Crop(screen.Bounds.Offset(-desktopBounds.X, -desktopBounds.Y)).ToBitmapSource();
-        return new OverlayWindow(viewModel, screen, backdrop);
+        if (_overlays.TryGetValue(screen.DeviceName, out var existing) && existing.Screen == screen)
+        {
+            return existing;
+        }
+
+        existing?.Close();
+        var overlay = new OverlayWindow(screen);
+        _overlays[screen.DeviceName] = overlay;
+        return overlay;
+    }
+
+    private static CroppedBitmap Slice(BitmapSource desktop, PixelRect region)
+    {
+        var clipped = region.Intersect(new PixelRect(0, 0, desktop.PixelWidth, desktop.PixelHeight));
+        var slice = new CroppedBitmap(desktop, new Int32Rect(clipped.X, clipped.Y, clipped.Width, clipped.Height));
+        slice.Freeze();
+        return slice;
     }
 }

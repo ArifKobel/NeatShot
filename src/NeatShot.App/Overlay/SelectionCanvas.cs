@@ -11,7 +11,6 @@ public sealed class SelectionCanvas : FrameworkElement
     private static readonly Brush LabelBackground = Freeze(new SolidColorBrush(Color.FromArgb(0xD0, 0x1E, 0x1E, 0x24)));
     private static readonly Pen SelectionPen = Freeze(new Pen(Brushes.White, 1));
     private static readonly Pen HoverPen = Freeze(new Pen(new SolidColorBrush(Color.FromRgb(0x4C, 0x9F, 0xFF)), 2));
-    private static readonly Pen CrosshairPen = Freeze(new Pen(new SolidColorBrush(Color.FromArgb(0x90, 0xFF, 0xFF, 0xFF)), 1));
     private static readonly Typeface LabelTypeface = new("Segoe UI");
 
     private OverlayViewModel? _viewModel;
@@ -20,11 +19,19 @@ public sealed class SelectionCanvas : FrameworkElement
 
     public void Attach(OverlayViewModel viewModel, PixelRect screenBounds, double scale)
     {
+        if (_viewModel is not null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelChanged;
+        }
+
         _viewModel = viewModel;
         _screenBounds = screenBounds;
         _scale = scale;
-        viewModel.PropertyChanged += (_, _) => InvalidateVisual();
+        viewModel.PropertyChanged += OnViewModelChanged;
+        InvalidateVisual();
     }
+
+    private void OnViewModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvalidateVisual();
 
     protected override void OnRender(DrawingContext drawingContext)
     {
@@ -46,11 +53,6 @@ public sealed class SelectionCanvas : FrameworkElement
         else if (_viewModel.HoveredWindow is { } window && _viewModel.Mode != CaptureMode.Fullscreen)
         {
             drawingContext.DrawRectangle(null, HoverPen, Snap(ToLocal(window.Bounds)));
-        }
-
-        if (!_viewModel.IsDragging && _screenBounds.Contains(_viewModel.Cursor))
-        {
-            DrawCrosshair(drawingContext, surface, ToLocal(_viewModel.Cursor));
         }
     }
 
@@ -95,23 +97,11 @@ public sealed class SelectionCanvas : FrameworkElement
         drawingContext.DrawText(text, new Point(x + padding, y + padding / 2));
     }
 
-    private static void DrawCrosshair(DrawingContext drawingContext, Rect surface, Point cursor)
-    {
-        var x = Math.Floor(cursor.X) + 0.5;
-        var y = Math.Floor(cursor.Y) + 0.5;
-        drawingContext.DrawLine(CrosshairPen, new Point(x, 0), new Point(x, surface.Height));
-        drawingContext.DrawLine(CrosshairPen, new Point(0, y), new Point(surface.Width, y));
-    }
-
     private Rect ToLocal(PixelRect rect) => new(
         (rect.X - _screenBounds.X) / _scale,
         (rect.Y - _screenBounds.Y) / _scale,
         rect.Width / _scale,
         rect.Height / _scale);
-
-    private Point ToLocal(PixelPoint point) => new(
-        (point.X - _screenBounds.X) / _scale,
-        (point.Y - _screenBounds.Y) / _scale);
 
     private static Rect Snap(Rect rect) => new(
         Math.Floor(rect.X) + 0.5,

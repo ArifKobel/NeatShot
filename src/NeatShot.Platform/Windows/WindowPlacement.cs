@@ -1,12 +1,25 @@
 using NeatShot.Core.Capture;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace NeatShot.Platform.Windows;
 
 public static class WindowPlacement
 {
+    public static unsafe void DisableTransitions(nint handle)
+    {
+        var disabled = 1;
+        _ = PInvoke.DwmSetWindowAttribute(new HWND(handle), DWMWINDOWATTRIBUTE.DWMWA_TRANSITIONS_FORCEDISABLED, &disabled, sizeof(int));
+    }
+
+    public static unsafe void SetCloaked(nint handle, bool cloaked)
+    {
+        var value = cloaked ? 1 : 0;
+        _ = PInvoke.DwmSetWindowAttribute(new HWND(handle), DWMWINDOWATTRIBUTE.DWMWA_CLOAK, &value, sizeof(int));
+    }
+
     public static void MoveToPixels(nint handle, PixelRect bounds, bool topmost)
     {
         var insertAfter = topmost ? HWND.HWND_TOPMOST : HWND.Null;

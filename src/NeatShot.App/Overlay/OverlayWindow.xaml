@@ -9,6 +9,8 @@
         Topmost="True"
         Cursor="Cross"
         Background="Black"
+        WindowStartupLocation="Manual"
+        ThemeMode="None"
         SnapsToDevicePixels="True"
         UseLayoutRounding="True">
   <Grid>

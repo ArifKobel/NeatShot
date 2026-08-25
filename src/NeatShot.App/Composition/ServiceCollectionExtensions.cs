@@ -49,6 +49,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<TrayController>();
         services.AddHostedService<HotkeyBinder>();
         services.AddHostedService<StartupSync>();
+        services.AddHostedService<OverlayWarmup>();
 
         return services;
     }
