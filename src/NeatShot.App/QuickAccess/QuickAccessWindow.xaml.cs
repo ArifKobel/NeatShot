@@ -16,8 +16,8 @@ public partial class QuickAccessWindow : Window
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(220));
 
     private readonly QuickAccessViewModel _viewModel;
-    private readonly ScreenInfo _screen;
     private readonly DispatcherTimer _dismissTimer;
+    private ScreenInfo _screen;
     private nint _handle;
     private int _slot;
     private Point _dragOrigin;
@@ -38,8 +38,9 @@ public partial class QuickAccessWindow : Window
         Thumbnail.PreviewMouseMove += OnThumbnailMouseMove;
     }
 
-    public void MoveToSlot(int slot)
+    public void Place(ScreenInfo screen, int slot)
     {
+        _screen = screen;
         _slot = slot;
         if (_handle != 0)
         {
