@@ -32,9 +32,14 @@ public partial class EditorWindow : Window
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(EditorViewModel.PendingTextPosition))
+        switch (e.PropertyName)
         {
-            ShowTextInput();
+            case nameof(EditorViewModel.PendingTextPosition):
+                ShowTextInput();
+                break;
+            case nameof(EditorViewModel.EditingText) or nameof(EditorViewModel.FontSize):
+                PlaceTextInput();
+                break;
         }
     }
 
@@ -42,7 +47,7 @@ public partial class EditorWindow : Window
     {
         if (_viewModel.PendingTextPosition is not { } position)
         {
-            TextEntry.Visibility = Visibility.Collapsed;
+            TextFrame.Visibility = Visibility.Collapsed;
             return;
         }
 
@@ -53,7 +58,7 @@ public partial class EditorWindow : Window
         TextEntry.Foreground = brush;
         TextEntry.CaretBrush = brush;
         PlaceTextInput();
-        TextEntry.Visibility = Visibility.Visible;
+        TextFrame.Visibility = Visibility.Visible;
         TextEntry.Focus();
         TextEntry.CaretIndex = TextEntry.Text.Length;
     }
@@ -67,15 +72,15 @@ public partial class EditorWindow : Window
 
         var origin = Surface.ImageToCanvas(position);
         TextEntry.FontSize = (_viewModel.EditingText?.FontSize ?? _viewModel.FontSize) * Surface.Scale;
-        Canvas.SetLeft(TextEntry, origin.X);
-        Canvas.SetTop(TextEntry, origin.Y);
+        Canvas.SetLeft(TextFrame, origin.X);
+        Canvas.SetTop(TextFrame, origin.Y);
     }
 
     private void OnTextInputKeyDown(object sender, KeyEventArgs e)
     {
         switch (e.Key)
         {
-            case Key.Enter:
+            case Key.Enter when Keyboard.Modifiers.HasFlag(ModifierKeys.Control):
                 CommitText();
                 e.Handled = true;
                 break;
@@ -89,7 +94,7 @@ public partial class EditorWindow : Window
 
     private void CommitText()
     {
-        if (TextEntry.Visibility != Visibility.Visible)
+        if (TextFrame.Visibility != Visibility.Visible)
         {
             return;
         }

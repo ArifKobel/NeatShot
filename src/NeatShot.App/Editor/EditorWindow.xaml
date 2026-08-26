@@ -297,6 +297,22 @@
             </Border>
           </Popup>
 
+          <ToggleButton x:Name="FontSizeButton" Style="{StaticResource PopoverButton}" ToolTip="Text size"
+                        Visibility="{Binding ShowsFontSize, Converter={StaticResource BoolToVisibility}}">
+            <icons:Icon Data="{StaticResource IconType}" Stroke="{StaticResource TextBrush}" />
+          </ToggleButton>
+          <Popup PlacementTarget="{Binding ElementName=FontSizeButton}" Placement="Bottom" HorizontalOffset="-12" VerticalOffset="-8"
+                 IsOpen="{Binding IsChecked, ElementName=FontSizeButton, Mode=TwoWay}" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+            <Border Style="{StaticResource Popover}" Padding="12,10">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Size" Foreground="{StaticResource MutedBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <Slider Focusable="False" Width="140" Minimum="{x:Static editor:EditorViewModel.MinFontSize}" Maximum="{x:Static editor:EditorViewModel.MaxFontSize}"
+                        TickFrequency="2" IsSnapToTickEnabled="True" VerticalAlignment="Center" Value="{Binding FontSize, Mode=TwoWay}" />
+                <TextBlock Text="{Binding FontSize}" Foreground="{StaticResource TextBrush}" FontSize="12" Width="22" TextAlignment="Right" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+          </Popup>
+
           <ToggleButton x:Name="StrengthButton" Style="{StaticResource PopoverButton}" ToolTip="Intensity"
                         Visibility="{Binding ShowsObscureStrength, Converter={StaticResource BoolToVisibility}}">
             <icons:Icon Data="{StaticResource IconSliders}" Stroke="{StaticResource TextBrush}" />
@@ -306,7 +322,7 @@
             <Border Style="{StaticResource Popover}" Padding="12,10">
               <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Intensity" Foreground="{StaticResource MutedBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0" />
-                <Slider Width="140" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                <Slider Focusable="False" Width="140" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"
                         Value="{Binding ObscureStrength, Mode=TwoWay}" />
                 <TextBlock Text="{Binding ObscureStrength}" Foreground="{StaticResource TextBrush}" FontSize="12" Width="18" TextAlignment="Right" VerticalAlignment="Center" />
               </StackPanel>
@@ -372,23 +388,25 @@
         </editor:EditorCanvas.InputBindings>
       </editor:EditorCanvas>
       <Canvas x:Name="TextLayer">
-        <TextBox x:Name="TextEntry"
-                 Visibility="Collapsed"
-                 MinWidth="4"
-                 SelectionBrush="{StaticResource AccentBrush}"
-                 SelectionOpacity="0.45"
-                 Padding="0"
-                 Background="Transparent"
-                 BorderThickness="0"
-                 FontFamily="Segoe UI Variable Text, Segoe UI"
-                 FontWeight="SemiBold"
-                 AcceptsReturn="False">
-          <TextBox.Template>
-            <ControlTemplate TargetType="TextBox">
-              <ScrollViewer x:Name="PART_ContentHost" Padding="0" Margin="0" />
-            </ControlTemplate>
-          </TextBox.Template>
-        </TextBox>
+        <Grid x:Name="TextFrame" Visibility="Collapsed">
+          <Rectangle Margin="-6,-4" Stroke="{StaticResource AccentBrush}" StrokeThickness="1" StrokeDashArray="4 3" RadiusX="2" RadiusY="2" IsHitTestVisible="False" />
+          <TextBox x:Name="TextEntry"
+                   MinWidth="4"
+                   SelectionBrush="{StaticResource AccentBrush}"
+                   SelectionOpacity="0.45"
+                   Padding="0"
+                   Background="Transparent"
+                   BorderThickness="0"
+                   FontFamily="Segoe UI Variable Text, Segoe UI"
+                   FontWeight="SemiBold"
+                   AcceptsReturn="True">
+            <TextBox.Template>
+              <ControlTemplate TargetType="TextBox">
+                <ScrollViewer x:Name="PART_ContentHost" Padding="0" Margin="0" />
+              </ControlTemplate>
+            </TextBox.Template>
+          </TextBox>
+        </Grid>
       </Canvas>
     </Grid>
   </DockPanel>

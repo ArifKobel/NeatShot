@@ -24,7 +24,9 @@ public enum Handle
 
 public sealed partial class EditorViewModel : ObservableObject
 {
-    private const double DefaultFontSize = 22;
+    public const double MinFontSize = 12;
+    public const double MaxFontSize = 96;
+    private const double DefaultFontSize = 28;
     private const double MinimumDragDistance = 2;
     private const double MinimumShapeSize = 2;
     private const double MinZoom = 0.1;
@@ -95,8 +97,11 @@ public sealed partial class EditorViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowsObscureStrength))]
+    [NotifyPropertyChangedFor(nameof(ShowsObscureStrength), nameof(ShowsFontSize))]
     public partial EditorTool ActiveTool { get; set; } = EditorTool.Select;
+
+    [ObservableProperty]
+    public partial double FontSize { get; set; } = DefaultFontSize;
 
     [ObservableProperty]
     public partial int ObscureStrength { get; set; } = ObscureAnnotation.DefaultStrength;
@@ -111,7 +116,7 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial double StrokeWidth { get; set; } = 4;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSelection), nameof(ShowsObscureStrength))]
+    [NotifyPropertyChangedFor(nameof(HasSelection), nameof(ShowsObscureStrength), nameof(ShowsFontSize))]
     [NotifyCanExecuteChangedFor(nameof(DeleteSelectionCommand), nameof(DuplicateCommand), nameof(BringToFrontCommand), nameof(SendToBackCommand))]
     public partial IReadOnlyList<Annotation> Selection { get; private set; } = [];
 
@@ -128,6 +133,7 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial ImagePoint? PendingTextPosition { get; private set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsFontSize))]
     public partial TextAnnotation? EditingText { get; private set; }
 
     [ObservableProperty]
@@ -144,7 +150,24 @@ public sealed partial class EditorViewModel : ObservableObject
     partial void OnObscureStrengthChanged(int value) =>
         Restyle(a => a is ObscureAnnotation obscure ? obscure.WithStrength(value) : a);
 
-    public double FontSize => DefaultFontSize + StrokeWidth * 2;
+    public bool ShowsFontSize =>
+        ActiveTool == EditorTool.Text || EditingText is not null || Selection.Any(a => a is TextAnnotation);
+
+    partial void OnFontSizeChanged(double value)
+    {
+        if (EditingText is { } editing && editing.FontSize != value)
+        {
+            EditingText = editing with { FontSize = value, Extent = MeasureExtent(editing.Position, editing.Text, value) };
+        }
+
+        Restyle(a => a is TextAnnotation text ? text with { FontSize = value, Extent = MeasureExtent(text.Position, text.Text, value) } : a);
+    }
+
+    private ImageRect MeasureExtent(ImagePoint position, string text, double fontSize)
+    {
+        var size = AnnotationRenderer.MeasureText(text, fontSize, Renderer.PixelsPerDip);
+        return new ImageRect(position.X, position.Y, size.Width, size.Height);
+    }
 
     public Annotation? PrimarySelection => Selection.Count == 1 ? Selection[0] : null;
 
@@ -319,6 +342,7 @@ public sealed partial class EditorViewModel : ObservableObject
 
         Selection = [];
         EditingText = text;
+        FontSize = text.FontSize;
         PendingTextPosition = text.Position;
         return true;
     }
