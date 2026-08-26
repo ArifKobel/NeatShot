@@ -2,12 +2,16 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
+using NeatShot.Platform.Windows;
 
 namespace NeatShot.Editor;
 
 public partial class EditorWindow : Window
 {
+    private const uint TitleBarColor = 0x00241E1E;
+
     private readonly EditorViewModel _viewModel;
 
     public EditorWindow(EditorViewModel viewModel)
@@ -17,6 +21,7 @@ public partial class EditorWindow : Window
         DataContext = viewModel;
 
         viewModel.CloseRequested += (_, _) => Close();
+        SourceInitialized += (_, _) => WindowPlacement.UseDarkTitleBar(new WindowInteropHelper(this).Handle, TitleBarColor);
         Loaded += (_, _) => Surface.Focus();
         Surface.ContextMenuOpening += (_, e) => e.Handled = _viewModel.PendingTextPosition is not null;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
