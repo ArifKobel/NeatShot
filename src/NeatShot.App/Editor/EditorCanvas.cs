@@ -18,8 +18,10 @@ public sealed class EditorCanvas : FrameworkElement
     private const double WheelZoomStep = 1.1;
     private const double FitPadding = 24;
 
-    private static readonly Brush Background = Frozen(new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x2B)));
-    private static readonly Brush ImageShadow = Frozen(new SolidColorBrush(Color.FromArgb(0x80, 0, 0, 0)));
+    private const int ShadowLayers = 6;
+
+    private static readonly Brush Background = Frozen(new SolidColorBrush(Color.FromRgb(0x15, 0x15, 0x19)));
+    private static readonly Brush ImageShadow = Frozen(new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)));
 
     private double _scale = 1;
     private Vector _pan;
@@ -27,6 +29,11 @@ public sealed class EditorCanvas : FrameworkElement
     private Vector _panStart;
     private bool _panning;
     private bool _spaceHeld;
+
+    public EditorCanvas()
+    {
+        ClipToBounds = true;
+    }
 
     public EditorViewModel? ViewModel
     {
@@ -60,7 +67,7 @@ public sealed class EditorCanvas : FrameworkElement
         var offset = Offset();
 
         drawingContext.DrawRectangle(Background, null, new Rect(RenderSize));
-        drawingContext.DrawRoundedRectangle(ImageShadow, null, new Rect(offset.X - 2, offset.Y + 2, image.Width * _scale + 4, image.Height * _scale + 4), 3, 3);
+        DrawShadow(drawingContext, new Rect(offset.X, offset.Y, image.Width * _scale, image.Height * _scale));
         drawingContext.PushTransform(new MatrixTransform(_scale, 0, 0, _scale, offset.X, offset.Y));
 
         drawingContext.DrawImage(ViewModel.Bitmap, new Rect(0, 0, image.Width, image.Height));
@@ -87,6 +94,16 @@ public sealed class EditorCanvas : FrameworkElement
         }
 
         drawingContext.Pop();
+    }
+
+    private static void DrawShadow(DrawingContext drawingContext, Rect image)
+    {
+        for (var layer = ShadowLayers; layer >= 1; layer--)
+        {
+            var spread = layer * 2;
+            var rect = new Rect(image.X - spread, image.Y - spread + layer, image.Width + spread * 2, image.Height + spread * 2);
+            drawingContext.DrawRoundedRectangle(ImageShadow, null, rect, spread, spread);
+        }
     }
 
     protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
@@ -290,9 +307,17 @@ public sealed class EditorCanvas : FrameworkElement
     private Point Offset()
     {
         var image = ViewModel!.Document.Image;
+        _pan = ClampPan(_pan, image.Width * _scale, image.Height * _scale);
         return new Point(
             Math.Round((RenderSize.Width - image.Width * _scale) / 2 + _pan.X),
             Math.Round((RenderSize.Height - image.Height * _scale) / 2 + _pan.Y));
+    }
+
+    private Vector ClampPan(Vector pan, double imageWidth, double imageHeight)
+    {
+        var slackX = Math.Max(0, (imageWidth - RenderSize.Width) / 2 + FitPadding);
+        var slackY = Math.Max(0, (imageHeight - RenderSize.Height) / 2 + FitPadding);
+        return new Vector(Math.Clamp(pan.X, -slackX, slackX), Math.Clamp(pan.Y, -slackY, slackY));
     }
 
     private void UpdateCursor(Point position)
