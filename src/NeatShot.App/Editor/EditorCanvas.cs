@@ -18,10 +18,7 @@ public sealed class EditorCanvas : FrameworkElement
     private const double WheelZoomStep = 1.1;
     private const double FitPadding = 24;
 
-    private const int ShadowLayers = 6;
-
     private static readonly Brush Background = Frozen(new SolidColorBrush(Color.FromRgb(0x15, 0x15, 0x19)));
-    private static readonly Brush ImageShadow = Frozen(new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)));
 
     private double _scale = 1;
     private Vector _pan;
@@ -70,7 +67,6 @@ public sealed class EditorCanvas : FrameworkElement
         var background = ViewModel.CanvasBackground;
 
         drawingContext.DrawRectangle(Background, null, new Rect(RenderSize));
-        DrawShadow(drawingContext, canvasRect);
         drawingContext.DrawRectangle(new SolidColorBrush(Color.FromArgb(background.A, background.R, background.G, background.B)), null, canvasRect);
         drawingContext.PushTransform(new MatrixTransform(_scale, 0, 0, _scale, offset.X, offset.Y));
 
@@ -92,16 +88,6 @@ public sealed class EditorCanvas : FrameworkElement
         }
 
         drawingContext.Pop();
-    }
-
-    private static void DrawShadow(DrawingContext drawingContext, Rect image)
-    {
-        for (var layer = ShadowLayers; layer >= 1; layer--)
-        {
-            var spread = layer * 2;
-            var rect = new Rect(image.X - spread, image.Y - spread + layer, image.Width + spread * 2, image.Height + spread * 2);
-            drawingContext.DrawRoundedRectangle(ImageShadow, null, rect, spread, spread);
-        }
     }
 
     protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
