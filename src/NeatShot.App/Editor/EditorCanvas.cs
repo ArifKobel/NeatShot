@@ -21,7 +21,6 @@ public sealed class EditorCanvas : FrameworkElement
     private const int ShadowLayers = 6;
 
     private static readonly Brush Background = Frozen(new SolidColorBrush(Color.FromRgb(0x15, 0x15, 0x19)));
-    private static readonly Brush CanvasFill = Frozen(new SolidColorBrush(Colors.White));
     private static readonly Brush ImageShadow = Frozen(new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)));
 
     private double _scale = 1;
@@ -64,14 +63,16 @@ public sealed class EditorCanvas : FrameworkElement
         }
 
         var image = ViewModel.Document.Image;
-        var canvas = ViewModel.Canvas;
-        UpdateScale(canvas.Width, canvas.Height);
+        var anchor = ViewModel.Document.Canvas;
+        UpdateScale(anchor.Width, anchor.Height);
         var offset = Offset();
+        var canvas = ViewModel.Canvas;
         var canvasRect = new Rect(offset.X + canvas.X * _scale, offset.Y + canvas.Y * _scale, canvas.Width * _scale, canvas.Height * _scale);
+        var background = ViewModel.CanvasBackground;
 
         drawingContext.DrawRectangle(Background, null, new Rect(RenderSize));
         DrawShadow(drawingContext, canvasRect);
-        drawingContext.DrawRectangle(CanvasFill, null, canvasRect);
+        drawingContext.DrawRectangle(new SolidColorBrush(Color.FromArgb(background.A, background.R, background.G, background.B)), null, canvasRect);
         drawingContext.PushTransform(new MatrixTransform(_scale, 0, 0, _scale, offset.X, offset.Y));
 
         drawingContext.DrawImage(ViewModel.Bitmap, new Rect(0, 0, image.Width, image.Height));
@@ -218,7 +219,7 @@ public sealed class EditorCanvas : FrameworkElement
         {
             var anchor = CanvasToImage(e.GetPosition(this));
             ViewModel.ZoomBy(e.Delta > 0 ? WheelZoomStep : 1 / WheelZoomStep);
-            var canvas = ViewModel.Canvas;
+            var canvas = ViewModel.Document.Canvas;
             UpdateScale(canvas.Width, canvas.Height);
             var moved = ImageToCanvas(anchor);
             _pan += e.GetPosition(this) - moved;
@@ -311,7 +312,7 @@ public sealed class EditorCanvas : FrameworkElement
 
     private Point Offset()
     {
-        var canvas = ViewModel!.Canvas;
+        var canvas = ViewModel!.Document.Canvas;
         _pan = ClampPan(_pan, canvas.Width * _scale, canvas.Height * _scale);
         return new Point(
             Math.Round((RenderSize.Width - canvas.Width * _scale) / 2 + _pan.X - canvas.X * _scale),

@@ -101,6 +101,9 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial int ObscureStrength { get; set; } = ObscureAnnotation.DefaultStrength;
 
     [ObservableProperty]
+    public partial Rgba CanvasBackground { get; set; } = new(0x15, 0x15, 0x1A);
+
+    [ObservableProperty]
     public partial Rgba Color { get; set; } = Rgba.Red;
 
     [ObservableProperty]
@@ -625,21 +628,21 @@ public sealed partial class EditorViewModel : ObservableObject
     [RelayCommand]
     private void Copy()
     {
-        Export.ClipboardImageService.SetImage(DocumentRenderer.Render(Document));
+        Export.ClipboardImageService.SetImage(DocumentRenderer.Render(Document, CanvasBackground));
         Close();
     }
 
     [RelayCommand]
     private void Save()
     {
-        _save(DocumentRenderer.Render(Document));
+        _save(DocumentRenderer.Render(Document, CanvasBackground));
         Close();
     }
 
     [RelayCommand]
     private void SaveAs()
     {
-        if (_saveAs(DocumentRenderer.Render(Document)) is not null)
+        if (_saveAs(DocumentRenderer.Render(Document, CanvasBackground)) is not null)
         {
             Close();
         }
