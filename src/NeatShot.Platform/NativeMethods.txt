@@ -57,3 +57,4 @@ SetWindowPos
 SET_WINDOW_POS_FLAGS
 HWND_TOPMOST
 DwmSetWindowAttribute
+COLORREF

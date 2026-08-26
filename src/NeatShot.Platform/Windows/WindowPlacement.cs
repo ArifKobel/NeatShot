@@ -20,6 +20,14 @@ public static class WindowPlacement
         _ = PInvoke.DwmSetWindowAttribute(new HWND(handle), DWMWINDOWATTRIBUTE.DWMWA_CLOAK, &value, sizeof(int));
     }
 
+    public static unsafe void UseDarkTitleBar(nint handle, uint captionColor)
+    {
+        var enabled = 1;
+        _ = PInvoke.DwmSetWindowAttribute(new HWND(handle), DWMWINDOWATTRIBUTE.DWMWA_USE_IMMERSIVE_DARK_MODE, &enabled, sizeof(int));
+        var color = new COLORREF(captionColor);
+        _ = PInvoke.DwmSetWindowAttribute(new HWND(handle), DWMWINDOWATTRIBUTE.DWMWA_CAPTION_COLOR, &color, (uint)sizeof(COLORREF));
+    }
+
     public static void MoveToPixels(nint handle, PixelRect bounds, bool topmost)
     {
         var insertAfter = topmost ? HWND.HWND_TOPMOST : HWND.Null;
