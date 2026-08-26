@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:quickAccess="clr-namespace:NeatShot.QuickAccess"
+        xmlns:icons="clr-namespace:NeatShot.Icons"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance quickAccess:QuickAccessViewModel}"
         Title="NeatShot"
@@ -23,15 +24,13 @@
       <Setter Property="Width" Value="32" />
       <Setter Property="Height" Value="30" />
       <Setter Property="Focusable" Value="False" />
-      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
-      <Setter Property="FontSize" Value="14" />
       <Setter Property="Foreground" Value="#F2F2F5" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Border x:Name="Chrome" Background="Transparent" CornerRadius="6">
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <icons:Icon Data="{TemplateBinding Content}" Stroke="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
@@ -50,8 +49,6 @@
       <Setter Property="Width" Value="22" />
       <Setter Property="Height" Value="22" />
       <Setter Property="Focusable" Value="False" />
-      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
-      <Setter Property="FontSize" Value="9" />
       <Setter Property="Foreground" Value="#F2F2F5" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Template">
@@ -59,7 +56,7 @@
           <ControlTemplate TargetType="Button">
             <Grid>
               <Ellipse x:Name="Chrome" Fill="#E61E1E24" Stroke="#66FFFFFF" StrokeThickness="1" />
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <icons:Icon Data="{TemplateBinding Content}" Stroke="{TemplateBinding Foreground}" Size="11" StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
@@ -97,10 +94,10 @@
                 Opacity="0"
                 IsHitTestVisible="{Binding IsMouseOver, ElementName=Root}">
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button Style="{StaticResource ActionButton}" ToolTip="Copy" Content="&#xE8C8;" Command="{Binding CopyCommand}" />
-            <Button Style="{StaticResource ActionButton}" ToolTip="Save" Content="&#xE74E;" Command="{Binding SaveCommand}" />
-            <Button Style="{StaticResource ActionButton}" ToolTip="Show in folder" Content="&#xE838;" Command="{Binding RevealInExplorerCommand}" />
-            <Button Style="{StaticResource ActionButton}" ToolTip="Annotate" Content="&#xE70F;" Command="{Binding EditCommand}" />
+            <Button Style="{StaticResource ActionButton}" ToolTip="Copy" Content="{StaticResource IconCopy}" Command="{Binding CopyCommand}" />
+            <Button Style="{StaticResource ActionButton}" ToolTip="Save" Content="{StaticResource IconSave}" Command="{Binding SaveCommand}" />
+            <Button Style="{StaticResource ActionButton}" ToolTip="Show in folder" Content="{StaticResource IconFolderOpen}" Command="{Binding RevealInExplorerCommand}" />
+            <Button Style="{StaticResource ActionButton}" ToolTip="Annotate" Content="{StaticResource IconPencil}" Command="{Binding EditCommand}" />
           </StackPanel>
         </Border>
 
@@ -111,7 +108,7 @@
                 Margin="0,6,6,0"
                 Opacity="0"
                 IsHitTestVisible="{Binding IsMouseOver, ElementName=Root}"
-                Content="&#xE711;"
+                Content="{StaticResource IconX}"
                 Command="{Binding DismissCommand}" />
 
         <Border x:Name="ConfirmationVeil" Background="#CC1A1A20" Visibility="{Binding Confirmation, Converter={StaticResource NullToVisibility}}">
@@ -119,7 +116,7 @@
             <StackPanel.RenderTransform>
               <ScaleTransform />
             </StackPanel.RenderTransform>
-            <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="22" Foreground="#F2F2F5" HorizontalAlignment="Center" Text="&#xE73E;" />
+            <icons:Icon Data="{StaticResource IconCheck}" Stroke="#F2F2F5" Size="24" StrokeThickness="2" HorizontalAlignment="Center" />
             <TextBlock Margin="0,6,0,0" FontSize="12" Foreground="#F2F2F5" HorizontalAlignment="Center" Text="{Binding Confirmation}" />
           </StackPanel>
         </Border>

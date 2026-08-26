@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:editor="clr-namespace:NeatShot.Editor"
+        xmlns:icons="clr-namespace:NeatShot.Icons"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance editor:EditorViewModel}"
         Title="NeatShot"
@@ -14,32 +15,12 @@
         WindowStartupLocation="CenterScreen"
         FontFamily="Segoe UI Variable Text, Segoe UI"
         Background="{StaticResource ChromeBrush}"
-        UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Display">
+        UseLayoutRounding="True">
   <Window.Resources>
     <editor:ToolToBoolConverter x:Key="ToolToBool" />
     <editor:RgbaToBrushConverter x:Key="RgbaToBrush" />
     <editor:EqualityConverter x:Key="Equality" />
     <editor:PercentConverter x:Key="Percent" />
-
-    <Geometry x:Key="IconSelect">M3.5,2.5 L3.5,12.5 L6.2,10 L8,13.8 L10,12.9 L8.2,9.2 L11.8,9.2 Z</Geometry>
-    <Geometry x:Key="IconRectangle">M2.5,3.5 H13.5 V12.5 H2.5 Z</Geometry>
-    <Geometry x:Key="IconEllipse">M2,8 A6,4.5 0 1 0 14,8 A6,4.5 0 1 0 2,8</Geometry>
-    <Geometry x:Key="IconPen">M2.5,13.5 L3.3,10.4 L10.8,2.9 L13.1,5.2 L5.6,12.7 Z M9.4,4.3 L11.7,6.6</Geometry>
-    <Geometry x:Key="IconArrow">M3,13 L13,3 M7.5,3 H13 V8.5</Geometry>
-    <Geometry x:Key="IconText">M3,13.5 L8,2.5 L13,13.5 M4.9,9.5 H11.1</Geometry>
-    <Geometry x:Key="IconBlur">M8,2 C8,2 3.5,7 3.5,9.8 A4.5,4.5 0 0 0 12.5,9.8 C12.5,7 8,2 8,2 Z</Geometry>
-    <Geometry x:Key="IconPixelate">M2.5,2.5 H13.5 V13.5 H2.5 Z M2.5,6.2 H13.5 M2.5,9.8 H13.5 M6.2,2.5 V13.5 M9.8,2.5 V13.5</Geometry>
-    <Geometry x:Key="IconCounter">M8,2.5 A5.5,5.5 0 1 0 8,13.5 A5.5,5.5 0 1 0 8,2.5 M6.3,6.2 L8.2,5 V11</Geometry>
-    <Geometry x:Key="IconLineWidth">M3,4 H13 M3,8 H13 M3,12 H13</Geometry>
-    <Geometry x:Key="IconHighlight">M3,13.5 H13 M5.2,10.2 L10.4,5 L12.6,7.2 L7.4,12.4 Z M4.2,11.8 L5.2,10.2 L7.4,12.4 Z</Geometry>
-
-    <Style x:Key="Glyph" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
-      <Setter Property="FontSize" Value="15" />
-      <Setter Property="HorizontalAlignment" Value="Center" />
-      <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
 
     <Style x:Key="ToolButton" TargetType="RadioButton">
       <Setter Property="Focusable" Value="False" />
@@ -51,9 +32,7 @@
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
             <Border x:Name="Chrome" Background="Transparent" CornerRadius="6">
-              <Path x:Name="Icon" Data="{TemplateBinding Content}" Stroke="{StaticResource TextBrush}" StrokeThickness="1.5"
-                    StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                    Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <icons:Icon x:Name="Glyph" Data="{TemplateBinding Content}" Stroke="{StaticResource TextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
@@ -61,7 +40,7 @@
               </Trigger>
               <Trigger Property="IsChecked" Value="True">
                 <Setter TargetName="Chrome" Property="Background" Value="{StaticResource AccentBrush}" />
-                <Setter TargetName="Icon" Property="Stroke" Value="White" />
+                <Setter TargetName="Glyph" Property="Stroke" Value="White" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -80,7 +59,7 @@
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Border x:Name="Chrome" Background="Transparent" CornerRadius="6">
-              <TextBlock Style="{StaticResource Glyph}" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
+              <icons:Icon Data="{TemplateBinding Content}" Stroke="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
@@ -216,8 +195,8 @@
 
     <Style x:Key="Divider" TargetType="Rectangle">
       <Setter Property="Width" Value="1" />
-      <Setter Property="Height" Value="26" />
-      <Setter Property="Margin" Value="8,0" />
+      <Setter Property="Height" Value="14" />
+      <Setter Property="Margin" Value="6,0" />
       <Setter Property="Fill" Value="{StaticResource DividerBrush}" />
     </Style>
 
@@ -251,32 +230,32 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-          <Button Style="{StaticResource IconButton}" ToolTip="Undo (Ctrl+Z)" Content="&#xE7A7;" Command="{Binding UndoCommand}" />
-          <Button Style="{StaticResource IconButton}" ToolTip="Redo (Ctrl+Y)" Content="&#xE7A6;" Command="{Binding RedoCommand}" />
+          <Button Style="{StaticResource IconButton}" ToolTip="Undo (Ctrl+Z)" Content="{StaticResource IconUndo}" Command="{Binding UndoCommand}" />
+          <Button Style="{StaticResource IconButton}" ToolTip="Redo (Ctrl+Y)" Content="{StaticResource IconRedo}" Command="{Binding RedoCommand}" />
         </StackPanel>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
           <Border Background="{StaticResource WellBrush}" CornerRadius="8" Padding="3">
             <StackPanel Orientation="Horizontal">
-              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Select (V)" Content="{StaticResource IconSelect}"
+              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Select (V)" Content="{StaticResource IconMousePointer}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Select}}" />
-              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Rectangle (R)" Content="{StaticResource IconRectangle}"
+              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Rectangle (R)" Content="{StaticResource IconSquare}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Rectangle}}" />
-              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Ellipse (O)" Content="{StaticResource IconEllipse}"
+              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Ellipse (O)" Content="{StaticResource IconCircle}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Ellipse}}" />
-              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Pen (P)" Content="{StaticResource IconPen}"
+              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Pen (P)" Content="{StaticResource IconPencil}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Freehand}}" />
-              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Arrow (A)" Content="{StaticResource IconArrow}"
+              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Arrow (A)" Content="{StaticResource IconArrowUpRight}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Arrow}}" />
-              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Text (T)" Content="{StaticResource IconText}"
+              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Text (T)" Content="{StaticResource IconType}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Text}}" />
-              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Blur (B)" Content="{StaticResource IconBlur}"
+              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Blur (B)" Content="{StaticResource IconDroplet}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Blur}}" />
-              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Pixelate" Content="{StaticResource IconPixelate}"
+              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Pixelate" Content="{StaticResource IconGrid}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Pixelate}}" />
               <RadioButton Style="{StaticResource ToolButton}" ToolTip="Counter (N)" Content="{StaticResource IconCounter}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Counter}}" />
-              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Highlight (H)" Content="{StaticResource IconHighlight}"
+              <RadioButton Style="{StaticResource ToolButton}" ToolTip="Highlight (H)" Content="{StaticResource IconHighlighter}"
                            IsChecked="{Binding ActiveTool, Converter={StaticResource ToolToBool}, ConverterParameter={x:Static editor:EditorTool.Highlight}}" />
             </StackPanel>
           </Border>
@@ -312,7 +291,7 @@
           </Popup>
 
           <ToggleButton x:Name="SizeButton" Style="{StaticResource PopoverButton}" ToolTip="Line width">
-            <Path Data="{StaticResource IconLineWidth}" Stroke="{StaticResource TextBrush}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="16" Height="16" />
+            <icons:Icon Data="{StaticResource IconMinus}" Stroke="{StaticResource TextBrush}" StrokeThickness="{Binding StrokeWidth}" />
           </ToggleButton>
           <Popup PlacementTarget="{Binding ElementName=SizeButton}" Placement="Bottom" HorizontalOffset="-12" VerticalOffset="-8"
                  IsOpen="{Binding IsChecked, ElementName=SizeButton, Mode=TwoWay}" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
@@ -325,7 +304,7 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <RadioButton Style="{StaticResource SizeButton}" GroupName="StrokeWidths"
+                    <RadioButton Style="{StaticResource SizeButton}" GroupName="Stroke"
                                  Command="{Binding DataContext.SelectStrokeWidthCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                  CommandParameter="{Binding}">
                       <RadioButton.IsChecked>
@@ -343,8 +322,8 @@
         </StackPanel>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-          <Button Style="{StaticResource IconButton}" ToolTip="Copy (Ctrl+C)" Content="&#xE8C8;" Command="{Binding CopyCommand}" />
-          <Button Style="{StaticResource IconButton}" ToolTip="Save as (Ctrl+Shift+S)" Content="&#xE792;" Command="{Binding SaveAsCommand}" />
+          <Button Style="{StaticResource IconButton}" ToolTip="Copy (Ctrl+C)" Content="{StaticResource IconCopy}" Command="{Binding CopyCommand}" />
+          <Button Style="{StaticResource IconButton}" ToolTip="Save as (Ctrl+Shift+S)" Content="{StaticResource IconFolderOpen}" Command="{Binding SaveAsCommand}" />
           <Button Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Content="Save" ToolTip="Save (Ctrl+S)" Command="{Binding SaveCommand}" />
         </StackPanel>
       </Grid>
@@ -355,12 +334,12 @@
         <TextBlock DockPanel.Dock="Left" Style="{StaticResource StatusText}" Text="{Binding ImageSize}" />
         <TextBlock DockPanel.Dock="Left" Style="{StaticResource StatusText}" Margin="16,0,0,0" Text="{Binding StatusMessage}" />
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-          <Button Style="{StaticResource IconButton}" Foreground="{StaticResource MutedBrush}" Height="24" Width="28" Content="&#xE71F;" ToolTip="Zoom out (Ctrl+-)" Command="{Binding ZoomOutCommand}" />
+          <Button Style="{StaticResource IconButton}" Foreground="{StaticResource MutedBrush}" Height="24" Width="28" Content="{StaticResource IconZoomOut}" ToolTip="Zoom out (Ctrl+-)" Command="{Binding ZoomOutCommand}" />
           <TextBlock Style="{StaticResource StatusText}" Width="40" TextAlignment="Center" Foreground="{StaticResource TextBrush}" Text="{Binding Zoom, Converter={StaticResource Percent}}" />
-          <Button Style="{StaticResource IconButton}" Foreground="{StaticResource MutedBrush}" Height="24" Width="28" Content="&#xE8A3;" ToolTip="Zoom in (Ctrl++)" Command="{Binding ZoomInCommand}" />
-          <Rectangle Style="{StaticResource Divider}" Height="14" Margin="6,0" />
-          <Button Style="{StaticResource IconButton}" Foreground="{StaticResource MutedBrush}" Height="24" Width="28" Content="&#xE9A6;" ToolTip="Fit (Ctrl+0)" Command="{Binding ZoomToFitCommand}" />
-          <Button Style="{StaticResource IconButton}" Foreground="{StaticResource MutedBrush}" Height="24" Width="28" Content="&#xE8A9;" ToolTip="Actual size (Ctrl+1)" Command="{Binding ZoomToActualCommand}" />
+          <Button Style="{StaticResource IconButton}" Foreground="{StaticResource MutedBrush}" Height="24" Width="28" Content="{StaticResource IconZoomIn}" ToolTip="Zoom in (Ctrl++)" Command="{Binding ZoomInCommand}" />
+          <Rectangle Style="{StaticResource Divider}" />
+          <Button Style="{StaticResource IconButton}" Foreground="{StaticResource MutedBrush}" Height="24" Width="28" Content="{StaticResource IconFit}" ToolTip="Fit (Ctrl+0)" Command="{Binding ZoomToFitCommand}" />
+          <Button Style="{StaticResource IconButton}" Foreground="{StaticResource MutedBrush}" Height="24" Width="28" Content="{StaticResource IconActualSize}" ToolTip="Actual size (Ctrl+1)" Command="{Binding ZoomToActualCommand}" />
         </StackPanel>
       </DockPanel>
     </Border>
@@ -404,9 +383,8 @@
         <TextBox x:Name="TextEntry"
                  Visibility="Collapsed"
                  IsHitTestVisible="True"
-                 MinWidth="40"
+                 MinWidth="4"
                  Padding="0"
-                 Margin="-2,0,0,0"
                  Background="Transparent"
                  BorderThickness="0"
                  FontFamily="Segoe UI Variable Text, Segoe UI"
@@ -414,7 +392,7 @@
                  AcceptsReturn="False">
           <TextBox.Template>
             <ControlTemplate TargetType="TextBox">
-              <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+              <ScrollViewer x:Name="PART_ContentHost" Padding="0" Margin="0" />
             </ControlTemplate>
           </TextBox.Template>
         </TextBox>
