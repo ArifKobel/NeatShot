@@ -25,6 +25,7 @@ public partial class EditorWindow : Window
         Loaded += (_, _) => Surface.Focus();
         Surface.ContextMenuOpening += (_, e) => e.Handled = _viewModel.PendingTextPosition is not null;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        Surface.ViewChanged += (_, _) => PlaceTextInput();
         TextEntry.KeyDown += OnTextInputKeyDown;
         TextEntry.LostFocus += (_, _) => CommitText();
     }
@@ -47,17 +48,27 @@ public partial class EditorWindow : Window
 
         var editing = _viewModel.EditingText;
         var color = editing?.Style.Color ?? _viewModel.Color;
-        var origin = Surface.ImageToCanvas(position);
         TextEntry.Text = editing?.Text ?? string.Empty;
-        TextEntry.FontSize = (editing?.FontSize ?? _viewModel.FontSize) * Surface.Scale;
         var brush = new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B));
         TextEntry.Foreground = brush;
         TextEntry.CaretBrush = brush;
-        Canvas.SetLeft(TextEntry, origin.X);
-        Canvas.SetTop(TextEntry, origin.Y);
+        PlaceTextInput();
         TextEntry.Visibility = Visibility.Visible;
         TextEntry.Focus();
         TextEntry.CaretIndex = TextEntry.Text.Length;
+    }
+
+    private void PlaceTextInput()
+    {
+        if (_viewModel.PendingTextPosition is not { } position)
+        {
+            return;
+        }
+
+        var origin = Surface.ImageToCanvas(position);
+        TextEntry.FontSize = (_viewModel.EditingText?.FontSize ?? _viewModel.FontSize) * Surface.Scale;
+        Canvas.SetLeft(TextEntry, origin.X);
+        Canvas.SetTop(TextEntry, origin.Y);
     }
 
     private void OnTextInputKeyDown(object sender, KeyEventArgs e)

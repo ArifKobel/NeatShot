@@ -45,6 +45,8 @@ public sealed class EditorCanvas : FrameworkElement
 
     protected override Visual GetVisualChild(int index) => _layers[index];
 
+    public event EventHandler? ViewChanged;
+
     public EditorViewModel? ViewModel
     {
         get => (EditorViewModel?)GetValue(ViewModelProperty);
@@ -87,6 +89,7 @@ public sealed class EditorCanvas : FrameworkElement
         {
             _annotationsDirty |= _viewTransform.Matrix.M11 != matrix.M11;
             _viewTransform.Matrix = matrix;
+            ViewChanged?.Invoke(this, EventArgs.Empty);
         }
 
         if (_annotationsDirty)
