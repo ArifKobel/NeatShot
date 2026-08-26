@@ -30,4 +30,5 @@
   <Geometry x:Key="IconSquareDashed">M5 3a2 2 0 0 0-2 2 M19 3a2 2 0 0 1 2 2 M21 19a2 2 0 0 1-2 2 M5 21a2 2 0 0 1-2-2 M9 3h1 M9 21h1 M14 3h1 M14 21h1 M3 9v1 M21 9v1 M3 14v1 M21 14v1</Geometry>
   <Geometry x:Key="IconImage">M5,3 H19 A2,2 0 0 1 21,5 V19 A2,2 0 0 1 19,21 H5 A2,2 0 0 1 3,19 V5 A2,2 0 0 1 5,3 Z M7,9 A2,2 0 1 0 11,9 A2,2 0 1 0 7,9 M21 15 l-3.086-3.086a2 2 0 0 0-2.828 0L6 21</Geometry>
   <Geometry x:Key="IconEllipsis">M11,12 A1,1 0 1 0 13,12 A1,1 0 1 0 11,12 M18,12 A1,1 0 1 0 20,12 A1,1 0 1 0 18,12 M4,12 A1,1 0 1 0 6,12 A1,1 0 1 0 4,12</Geometry>
+  <Geometry x:Key="IconSliders">M10 5H3 M12 19H3 M14 3v4 M16 17v4 M21 12h-9 M21 19h-5 M21 5h-7 M8 10v4 M8 12H3</Geometry>
 </ResourceDictionary>

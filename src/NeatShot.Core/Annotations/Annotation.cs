@@ -176,9 +176,15 @@ public enum ObscureKind
     Pixelate,
 }
 
-public sealed record ObscureAnnotation(ImageRect Rect, ObscureKind Kind) : Annotation
+public sealed record ObscureAnnotation(ImageRect Rect, ObscureKind Kind, int Strength = ObscureAnnotation.DefaultStrength) : Annotation
 {
+    public const int MinStrength = 1;
+    public const int MaxStrength = 10;
+    public const int DefaultStrength = 4;
+
     public override ImageRect Bounds => Rect;
+
+    public ObscureAnnotation WithStrength(int strength) => this with { Strength = Math.Clamp(strength, MinStrength, MaxStrength) };
 
     public override Annotation Translate(double dx, double dy) => this with { Rect = Rect.Translate(dx, dy) };
 

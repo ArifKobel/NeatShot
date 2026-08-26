@@ -10,8 +10,8 @@ namespace NeatShot.Editor;
 
 public sealed class AnnotationRenderer
 {
-    private const int PixelateBlockSize = 12;
-    private const int BlurRadius = 6;
+    private const int PixelateBlockPerStrength = 3;
+    private const int BlurRadiusPerStrength = 2;
     private const int CacheLimit = 64;
     private const double ArrowHeadLength = 4;
     private const double ArrowHeadWidth = 2.2;
@@ -221,8 +221,8 @@ public sealed class AnnotationRenderer
 
             var cropped = _image.Crop(region);
             var filtered = obscure.Kind == ObscureKind.Pixelate
-                ? ImageFilters.Pixelate(cropped, PixelateBlockSize)
-                : ImageFilters.BoxBlur(cropped, BlurRadius);
+                ? ImageFilters.Pixelate(cropped, obscure.Strength * PixelateBlockPerStrength)
+                : ImageFilters.BoxBlur(cropped, obscure.Strength * BlurRadiusPerStrength);
             bitmap = filtered.ToBitmapSource();
             _obscureCache[obscure] = bitmap;
         }

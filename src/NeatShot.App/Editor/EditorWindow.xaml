@@ -21,6 +21,7 @@
     <editor:RgbaToBrushConverter x:Key="RgbaToBrush" />
     <editor:EqualityConverter x:Key="Equality" />
     <editor:PercentConverter x:Key="Percent" />
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
     <Style x:Key="ToolButton" TargetType="RadioButton">
       <Setter Property="Focusable" Value="False" />
@@ -320,6 +321,22 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
+            </Border>
+          </Popup>
+
+          <ToggleButton x:Name="StrengthButton" Style="{StaticResource PopoverButton}" ToolTip="Intensity"
+                        Visibility="{Binding ShowsObscureStrength, Converter={StaticResource BoolToVisibility}}">
+            <icons:Icon Data="{StaticResource IconSliders}" Stroke="{StaticResource TextBrush}" />
+          </ToggleButton>
+          <Popup PlacementTarget="{Binding ElementName=StrengthButton}" Placement="Bottom" HorizontalOffset="-12" VerticalOffset="-8"
+                 IsOpen="{Binding IsChecked, ElementName=StrengthButton, Mode=TwoWay}" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+            <Border Style="{StaticResource Popover}" Padding="12,10">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Intensity" Foreground="{StaticResource MutedBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <Slider Width="140" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                        Value="{Binding ObscureStrength, Mode=TwoWay}" />
+                <TextBlock Text="{Binding ObscureStrength}" Foreground="{StaticResource TextBrush}" FontSize="12" Width="18" TextAlignment="Right" VerticalAlignment="Center" />
+              </StackPanel>
             </Border>
           </Popup>
         </StackPanel>

@@ -77,7 +77,11 @@ public sealed partial class EditorViewModel : ObservableObject
     public string ImageSize => $"{Document.Image.Width} × {Document.Image.Height}";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsObscureStrength))]
     public partial EditorTool ActiveTool { get; set; } = EditorTool.Arrow;
+
+    [ObservableProperty]
+    public partial int ObscureStrength { get; set; } = ObscureAnnotation.DefaultStrength;
 
     [ObservableProperty]
     public partial Rgba Color { get; set; } = Rgba.Red;
@@ -86,7 +90,7 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial double StrokeWidth { get; set; } = 4;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSelection))]
+    [NotifyPropertyChangedFor(nameof(HasSelection), nameof(ShowsObscureStrength))]
     [NotifyCanExecuteChangedFor(nameof(DeleteSelectionCommand), nameof(DuplicateCommand), nameof(BringToFrontCommand), nameof(SendToBackCommand))]
     public partial IReadOnlyList<Annotation> Selection { get; private set; } = [];
 
@@ -112,6 +116,12 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial bool FitToWindow { get; set; } = true;
 
     public bool HasSelection => Selection.Count > 0;
+
+    public bool ShowsObscureStrength =>
+        ActiveTool is EditorTool.Blur or EditorTool.Pixelate || Selection.Any(a => a is ObscureAnnotation);
+
+    partial void OnObscureStrengthChanged(int value) =>
+        Restyle(a => a is ObscureAnnotation obscure ? obscure.WithStrength(value) : a);
 
     public double FontSize => DefaultFontSize + StrokeWidth * 2;
 
@@ -445,8 +455,8 @@ public sealed partial class EditorViewModel : ObservableObject
             EditorTool.Rectangle => new RectangleAnnotation(rect, CurrentStyle),
             EditorTool.Ellipse => new EllipseAnnotation(rect, CurrentStyle),
             EditorTool.Highlight => new HighlightAnnotation(rect, Color),
-            EditorTool.Blur => new ObscureAnnotation(rect, ObscureKind.Blur),
-            EditorTool.Pixelate => new ObscureAnnotation(rect, ObscureKind.Pixelate),
+            EditorTool.Blur => new ObscureAnnotation(rect, ObscureKind.Blur, ObscureStrength),
+            EditorTool.Pixelate => new ObscureAnnotation(rect, ObscureKind.Pixelate, ObscureStrength),
             _ => null,
         };
     }
