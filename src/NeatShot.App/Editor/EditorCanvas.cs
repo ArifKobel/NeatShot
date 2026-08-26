@@ -63,8 +63,7 @@ public sealed class EditorCanvas : FrameworkElement
         }
 
         var image = ViewModel.Document.Image;
-        var anchor = ViewModel.Document.Canvas;
-        UpdateScale(anchor.Width, anchor.Height);
+        UpdateScale(image.Width, image.Height);
         var offset = Offset();
         var canvas = ViewModel.Canvas;
         var canvasRect = new Rect(offset.X + canvas.X * _scale, offset.Y + canvas.Y * _scale, canvas.Width * _scale, canvas.Height * _scale);
@@ -219,8 +218,7 @@ public sealed class EditorCanvas : FrameworkElement
         {
             var anchor = CanvasToImage(e.GetPosition(this));
             ViewModel.ZoomBy(e.Delta > 0 ? WheelZoomStep : 1 / WheelZoomStep);
-            var canvas = ViewModel.Document.Canvas;
-            UpdateScale(canvas.Width, canvas.Height);
+            UpdateScale(ViewModel.Document.Image.Width, ViewModel.Document.Image.Height);
             var moved = ImageToCanvas(anchor);
             _pan += e.GetPosition(this) - moved;
         }
@@ -292,7 +290,7 @@ public sealed class EditorCanvas : FrameworkElement
         _panStart = _pan;
     }
 
-    private void UpdateScale(double canvasWidth, double canvasHeight)
+    private void UpdateScale(int imageWidth, int imageHeight)
     {
         if (ViewModel is null || RenderSize.Width <= 0 || RenderSize.Height <= 0)
         {
@@ -301,7 +299,7 @@ public sealed class EditorCanvas : FrameworkElement
 
         if (ViewModel.FitToWindow)
         {
-            _scale = Math.Min(1, Math.Min((RenderSize.Width - FitPadding * 2) / canvasWidth, (RenderSize.Height - FitPadding * 2) / canvasHeight));
+            _scale = Math.Min(1, Math.Min((RenderSize.Width - FitPadding * 2) / imageWidth, (RenderSize.Height - FitPadding * 2) / imageHeight));
             ViewModel.Zoom = _scale;
         }
         else
@@ -312,11 +310,12 @@ public sealed class EditorCanvas : FrameworkElement
 
     private Point Offset()
     {
-        var canvas = ViewModel!.Document.Canvas;
+        var image = ViewModel!.Document.Image;
+        var canvas = ViewModel.Document.Canvas;
         _pan = ClampPan(_pan, canvas.Width * _scale, canvas.Height * _scale);
         return new Point(
-            Math.Round((RenderSize.Width - canvas.Width * _scale) / 2 + _pan.X - canvas.X * _scale),
-            Math.Round((RenderSize.Height - canvas.Height * _scale) / 2 + _pan.Y - canvas.Y * _scale));
+            Math.Round((RenderSize.Width - image.Width * _scale) / 2 + _pan.X),
+            Math.Round((RenderSize.Height - image.Height * _scale) / 2 + _pan.Y));
     }
 
     private Vector ClampPan(Vector pan, double imageWidth, double imageHeight)
