@@ -26,9 +26,17 @@ jobs:
         run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=results.trx"
 
       - name: Publish
-        run: dotnet publish src/NeatShot.App --no-build --configuration Release --output artifacts/NeatShot
+        run: >
+          dotnet publish src/NeatShot.App --configuration Release
+          --runtime win-x64 --self-contained
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:PublishDocumentationFiles=false
+          --output artifacts/publish
+
+      - name: Build installer
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=0.0.0-ci installer/NeatShot.iss'
 
       - uses: actions/upload-artifact@v4
         with:
-          name: NeatShot
-          path: artifacts/NeatShot
+          name: NeatShot-installer
+          path: artifacts/*.exe
