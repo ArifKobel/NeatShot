@@ -96,7 +96,7 @@ public sealed partial class EditorViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowsObscureStrength))]
-    public partial EditorTool ActiveTool { get; set; } = EditorTool.Arrow;
+    public partial EditorTool ActiveTool { get; set; } = EditorTool.Select;
 
     [ObservableProperty]
     public partial int ObscureStrength { get; set; } = ObscureAnnotation.DefaultStrength;
