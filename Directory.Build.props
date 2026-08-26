@@ -10,6 +10,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <Authors>Arif</Authors>
+    <Version>0.1.0</Version>
     <Product>NeatShot</Product>
   </PropertyGroup>
 
