@@ -49,7 +49,9 @@ public partial class EditorWindow : Window
         var origin = Surface.ImageToCanvas(position);
         TextEntry.Text = string.Empty;
         TextEntry.FontSize = _viewModel.FontSize * Surface.Scale;
-        TextEntry.Foreground = new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B));
+        var brush = new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B));
+        TextEntry.Foreground = brush;
+        TextEntry.CaretBrush = brush;
         Canvas.SetLeft(TextEntry, origin.X);
         Canvas.SetTop(TextEntry, origin.Y);
         TextEntry.Visibility = Visibility.Visible;
