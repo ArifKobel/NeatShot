@@ -371,7 +371,7 @@
           <KeyBinding Modifiers="Ctrl" Key="D1" Command="{Binding ZoomToActualCommand}" />
           <KeyBinding Key="Delete" Command="{Binding DeleteSelectionCommand}" />
           <KeyBinding Key="Back" Command="{Binding DeleteSelectionCommand}" />
-          <KeyBinding Key="Escape" Command="{Binding DeselectCommand}" />
+          <KeyBinding Key="Escape" Command="{Binding EscapeCommand}" />
           <KeyBinding Key="Left" Command="{Binding NudgeCommand}" CommandParameter="left" />
           <KeyBinding Key="Right" Command="{Binding NudgeCommand}" CommandParameter="right" />
           <KeyBinding Key="Up" Command="{Binding NudgeCommand}" CommandParameter="up" />

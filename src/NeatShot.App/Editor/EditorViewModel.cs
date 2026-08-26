@@ -612,7 +612,17 @@ public sealed partial class EditorViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Deselect() => Selection = [];
+    private void Escape()
+    {
+        if (HasSelection)
+        {
+            Selection = [];
+        }
+        else
+        {
+            Copy();
+        }
+    }
 
     [RelayCommand]
     private void Nudge(string direction)
