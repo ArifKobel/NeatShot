@@ -304,10 +304,10 @@ public sealed class EditorCanvas : FrameworkElement
             Math.Round((RenderSize.Height - image.Height * _scale) / 2 + _pan.Y));
     }
 
-    private Vector ClampPan(Vector pan, double imageWidth, double imageHeight)
+    private static Vector ClampPan(Vector pan, double canvasWidth, double canvasHeight)
     {
-        var slackX = Math.Max(0, (imageWidth - RenderSize.Width) / 2 + FitPadding);
-        var slackY = Math.Max(0, (imageHeight - RenderSize.Height) / 2 + FitPadding);
+        var slackX = canvasWidth / 2;
+        var slackY = canvasHeight / 2;
         return new Vector(Math.Clamp(pan.X, -slackX, slackX), Math.Clamp(pan.Y, -slackY, slackY));
     }
 
