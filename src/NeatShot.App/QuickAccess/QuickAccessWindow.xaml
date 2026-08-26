@@ -94,7 +94,8 @@
                 VerticalAlignment="Bottom"
                 Background="#D91A1A20"
                 Padding="4,2"
-                Opacity="0">
+                Opacity="0"
+                IsHitTestVisible="{Binding IsMouseOver, ElementName=Root}">
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <Button Style="{StaticResource ActionButton}" ToolTip="Copy" Content="&#xE8C8;" Command="{Binding CopyCommand}" />
             <Button Style="{StaticResource ActionButton}" ToolTip="Save" Content="&#xE74E;" Command="{Binding SaveCommand}" />
@@ -102,6 +103,16 @@
             <Button Style="{StaticResource ActionButton}" ToolTip="Annotate" Content="&#xE70F;" Command="{Binding EditCommand}" />
           </StackPanel>
         </Border>
+
+        <Button x:Name="Dismiss"
+                Style="{StaticResource CloseButton}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,6,6,0"
+                Opacity="0"
+                IsHitTestVisible="{Binding IsMouseOver, ElementName=Root}"
+                Content="&#xE711;"
+                Command="{Binding DismissCommand}" />
 
         <Border Background="#CC1A1A20" Visibility="{Binding Confirmation, Converter={StaticResource NullToVisibility}}">
           <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -111,15 +122,6 @@
         </Border>
       </Grid>
     </Border>
-
-    <Button x:Name="Dismiss"
-            Style="{StaticResource CloseButton}"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Top"
-            Margin="-8,-8,0,0"
-            Opacity="0"
-            Content="&#xE711;"
-            Command="{Binding DismissCommand}" />
 
     <Grid.Triggers>
       <EventTrigger RoutedEvent="MouseEnter">

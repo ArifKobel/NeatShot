@@ -10,15 +10,24 @@ namespace NeatShot.QuickAccess;
 
 public partial class QuickAccessWindow : Window
 {
+    public static readonly DependencyProperty MoveProgressProperty = DependencyProperty.Register(
+        nameof(MoveProgress),
+        typeof(double),
+        typeof(QuickAccessWindow),
+        new PropertyMetadata(1.0, (d, _) => ((QuickAccessWindow)d).ApplyMove()));
+
     private const int EdgeMargin = 6;
     private const int SwipeAwayZone = 40;
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(220));
+    private static readonly Duration MoveDuration = new(TimeSpan.FromMilliseconds(260));
 
     private readonly QuickAccessViewModel _viewModel;
     private readonly ICursorLocator _cursor;
     private ScreenInfo _screen;
     private nint _handle;
     private Point _dragOrigin;
+    private PixelRect _from;
+    private PixelRect _to;
 
     public QuickAccessWindow(QuickAccessViewModel viewModel, ScreenInfo screen, ICursorLocator cursor)
     {
@@ -43,11 +52,45 @@ public partial class QuickAccessWindow : Window
         var width = (int)Math.Round((Card.Width + Root.Margin.Left + Root.Margin.Right) * scale);
         var height = PixelHeight;
         var left = screen.WorkArea.Left + (int)Math.Round((EdgeMargin - Root.Margin.Left) * scale);
+        var target = new PixelRect(left, bottom - height, width, height);
 
-        if (_handle != 0)
+        if (_handle == 0 || _to.IsEmpty)
         {
-            WindowPlacement.MoveToPixels(_handle, new PixelRect(left, bottom - height, width, height), topmost: true);
+            _from = _to = target;
+            ApplyMove();
+            return;
         }
+
+        if (target == _to)
+        {
+            return;
+        }
+
+        _from = _to;
+        _to = target;
+        BeginAnimation(MoveProgressProperty, null);
+        SetValue(MoveProgressProperty, 0.0);
+        BeginAnimation(
+            MoveProgressProperty,
+            new DoubleAnimation(1, MoveDuration) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+    }
+
+    private double MoveProgress => (double)GetValue(MoveProgressProperty);
+
+    private void ApplyMove()
+    {
+        if (_handle == 0)
+        {
+            return;
+        }
+
+        var t = MoveProgress;
+        var bounds = new PixelRect(
+            (int)Math.Round(_from.X + (_to.X - _from.X) * t),
+            (int)Math.Round(_from.Y + (_to.Y - _from.Y) * t),
+            _to.Width,
+            _to.Height);
+        WindowPlacement.MoveToPixels(_handle, bounds, topmost: true);
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -55,6 +98,7 @@ public partial class QuickAccessWindow : Window
         base.OnSourceInitialized(e);
         _handle = new WindowInteropHelper(this).Handle;
         WindowPlacement.DisableTransitions(_handle);
+        ApplyMove();
         SlideIn();
     }
 
