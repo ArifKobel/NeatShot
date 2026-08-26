@@ -245,7 +245,7 @@ public sealed partial class EditorViewModel : ObservableObject
                 EndSelectDrag(moved, extendSelection);
                 break;
             case EditorTool.Freehand when _strokePoints is { Count: > 1 }:
-                Commit(new FreehandAnnotation(_strokePoints.ToArray(), CurrentStyle));
+                Document.Execute(new AddAnnotationCommand(new FreehandAnnotation(_strokePoints.ToArray(), CurrentStyle)));
                 break;
             case EditorTool.Arrow:
             case EditorTool.Rectangle:
