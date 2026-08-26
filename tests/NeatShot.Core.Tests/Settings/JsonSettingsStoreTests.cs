@@ -26,7 +26,6 @@ public sealed class JsonSettingsStoreTests : IDisposable
             FileNamePattern = "shot-{n}",
             ImageFormat = ImageFormat.Jpeg,
             CopyToClipboard = false,
-            SaveToDisk = false,
             LaunchAtStartup = true,
             Hotkeys = new Dictionary<HotkeyAction, Hotkey>
             {
@@ -41,7 +40,6 @@ public sealed class JsonSettingsStoreTests : IDisposable
         Assert.Equal(settings.FileNamePattern, loaded.FileNamePattern);
         Assert.Equal(settings.ImageFormat, loaded.ImageFormat);
         Assert.Equal(settings.CopyToClipboard, loaded.CopyToClipboard);
-        Assert.Equal(settings.SaveToDisk, loaded.SaveToDisk);
         Assert.Equal(settings.LaunchAtStartup, loaded.LaunchAtStartup);
         Assert.Equal(Hotkey.Parse("Alt+F9"), loaded.Hotkeys[HotkeyAction.CaptureRegion]);
     }

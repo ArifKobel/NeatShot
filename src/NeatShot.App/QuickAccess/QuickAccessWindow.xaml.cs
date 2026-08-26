@@ -165,7 +165,7 @@ public partial class QuickAccessWindow : Window
             return;
         }
 
-        var data = new DataObject(DataFormats.FileDrop, new[] { _viewModel.EnsureFile() });
+        var data = new DataObject(DataFormats.FileDrop, new[] { _viewModel.FileForDrag() });
         data.SetImage(_viewModel.Bitmap);
         DragDrop.DoDragDrop(Card, data, DragDropEffects.Copy);
 

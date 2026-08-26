@@ -14,7 +14,6 @@ public sealed partial class CaptureCoordinator
     private readonly IScreenProvider _screens;
     private readonly IScreenCapture _screenCapture;
     private readonly OverlayService _overlay;
-    private readonly ImageFileWriter _fileWriter;
     private readonly QuickAccessService _quickAccess;
     private readonly EditorService _editor;
     private readonly SettingsManager _settings;
@@ -25,7 +24,6 @@ public sealed partial class CaptureCoordinator
         IScreenProvider screens,
         IScreenCapture screenCapture,
         OverlayService overlay,
-        ImageFileWriter fileWriter,
         QuickAccessService quickAccess,
         EditorService editor,
         SettingsManager settings,
@@ -34,7 +32,6 @@ public sealed partial class CaptureCoordinator
         _screens = screens;
         _screenCapture = screenCapture;
         _overlay = overlay;
-        _fileWriter = fileWriter;
         _quickAccess = quickAccess;
         _editor = editor;
         _quickAccess.EditRequested += (_, capture) => _editor.Open(capture);
@@ -104,19 +101,13 @@ public sealed partial class CaptureCoordinator
             ClipboardImageService.SetImage(bitmap);
         }
 
-        string? path = null;
-        if (_settings.Current.SaveToDisk)
-        {
-            path = _fileWriter.Save(bitmap, capture.CapturedAt);
-        }
-
-        LogCaptured(capture.Mode, capture.Image.Width, capture.Image.Height, path ?? "memory");
-        _quickAccess.Show(capture, path);
+        LogCaptured(capture.Mode, capture.Image.Width, capture.Image.Height);
+        _quickAccess.Show(capture);
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "{Mode} capture cancelled")]
     private partial void LogCaptureCancelled(CaptureMode mode);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "{Mode} capture {Width}x{Height} stored at {Path}")]
-    private partial void LogCaptured(CaptureMode mode, int width, int height, string path);
+    [LoggerMessage(Level = LogLevel.Information, Message = "{Mode} capture {Width}x{Height}")]
+    private partial void LogCaptured(CaptureMode mode, int width, int height);
 }

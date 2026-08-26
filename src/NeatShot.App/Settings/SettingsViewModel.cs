@@ -21,7 +21,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         FileNamePattern = current.FileNamePattern;
         ImageFormat = current.ImageFormat;
         CopyToClipboard = current.CopyToClipboard;
-        SaveToDisk = current.SaveToDisk;
         LaunchAtStartup = current.LaunchAtStartup;
         Hotkeys =
         [
@@ -52,9 +51,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     public partial bool CopyToClipboard { get; set; }
-
-    [ObservableProperty]
-    public partial bool SaveToDisk { get; set; }
 
     [ObservableProperty]
     public partial bool LaunchAtStartup { get; set; }
@@ -93,7 +89,6 @@ public sealed partial class SettingsViewModel : ObservableObject
             FileNamePattern = FileNamePattern.Trim(),
             ImageFormat = ImageFormat,
             CopyToClipboard = CopyToClipboard,
-            SaveToDisk = SaveToDisk,
             LaunchAtStartup = LaunchAtStartup,
             Hotkeys = hotkeys,
         });

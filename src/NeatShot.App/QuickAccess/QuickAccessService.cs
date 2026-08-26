@@ -15,24 +15,26 @@ public sealed class QuickAccessService
     private readonly IScreenProvider _screens;
     private readonly ICursorLocator _cursor;
     private readonly ImageFileWriter _fileWriter;
+    private readonly CaptureCache _cache;
     private readonly List<QuickAccessWindow> _windows = [];
     private readonly DispatcherTimer _follow;
     private ScreenInfo? _screen;
     private ScreenInfo? _candidate;
     private DateTime _candidateSince;
 
-    public QuickAccessService(IScreenProvider screens, ICursorLocator cursor, ImageFileWriter fileWriter)
+    public QuickAccessService(IScreenProvider screens, ICursorLocator cursor, ImageFileWriter fileWriter, CaptureCache cache)
     {
         _screens = screens;
         _cursor = cursor;
         _fileWriter = fileWriter;
+        _cache = cache;
         _follow = new DispatcherTimer { Interval = FollowInterval };
         _follow.Tick += (_, _) => FollowCursor();
     }
 
     public event EventHandler<Core.Capture.Capture>? EditRequested;
 
-    public void Show(Core.Capture.Capture capture, string? filePath)
+    public void Show(Core.Capture.Capture capture)
     {
         ArgumentNullException.ThrowIfNull(capture);
 
@@ -42,7 +44,7 @@ public sealed class QuickAccessService
         }
 
         _screen = ActiveScreen();
-        var viewModel = new QuickAccessViewModel(capture, filePath, _fileWriter, c => EditRequested?.Invoke(this, c));
+        var viewModel = new QuickAccessViewModel(capture, _fileWriter, _cache, c => EditRequested?.Invoke(this, c));
         var window = new QuickAccessWindow(viewModel, _screen, _cursor);
         window.Closed += (sender, _) =>
         {

@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<OverlayService>();
         services.AddSingleton<ImageFileWriter>();
+        services.AddSingleton(_ => CaptureCache.InLocalAppData());
         services.AddSingleton<QuickAccessService>();
         services.AddSingleton<EditorService>();
         services.AddSingleton<SettingsWindowService>();

@@ -63,7 +63,6 @@
 
     <TextBlock Style="{StaticResource SectionHeader}" Text="After capture" />
     <CheckBox Content="Copy image to clipboard" IsChecked="{Binding CopyToClipboard}" />
-    <CheckBox Content="Save image to disk automatically" IsChecked="{Binding SaveToDisk}" />
 
     <TextBlock Style="{StaticResource SectionHeader}" Text="Shortcuts" />
     <ItemsControl ItemsSource="{Binding Hotkeys}">

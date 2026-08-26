@@ -13,13 +13,13 @@ public sealed record AppSettings
     public string SaveDirectory { get; init; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "NeatShot");
 
-    public string FileNamePattern { get; init; } = "NeatShot {date} at {time}";
+    public const string DefaultFileNamePattern = "NeatShot {date} at {time}";
+
+    public string FileNamePattern { get; init; } = DefaultFileNamePattern;
 
     public ImageFormat ImageFormat { get; init; } = ImageFormat.Png;
 
     public bool CopyToClipboard { get; init; } = true;
-
-    public bool SaveToDisk { get; init; } = true;
 
     public bool LaunchAtStartup { get; init; }
 

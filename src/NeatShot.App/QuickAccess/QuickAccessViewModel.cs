@@ -12,18 +12,20 @@ public sealed partial class QuickAccessViewModel : ObservableObject
     private static readonly TimeSpan ConfirmationDuration = TimeSpan.FromMilliseconds(650);
 
     private readonly ImageFileWriter _fileWriter;
+    private readonly CaptureCache _cache;
     private readonly Action<Core.Capture.Capture> _openEditor;
+    private string? _cachedPath;
 
     public QuickAccessViewModel(
         Core.Capture.Capture capture,
-        string? filePath,
         ImageFileWriter fileWriter,
+        CaptureCache cache,
         Action<Core.Capture.Capture> openEditor)
     {
         Capture = capture;
         Bitmap = capture.Image.ToBitmapSource();
-        FilePath = filePath;
         _fileWriter = fileWriter;
+        _cache = cache;
         _openEditor = openEditor;
     }
 
@@ -43,15 +45,9 @@ public sealed partial class QuickAccessViewModel : ObservableObject
 
     public bool IsSaved => FilePath is not null;
 
-    public string EnsureFile()
-    {
-        if (FilePath is null)
-        {
-            FilePath = _fileWriter.Save(Bitmap, Capture.CapturedAt);
-        }
+    public string FileForDrag() => FilePath ?? (_cachedPath ??= _cache.Store(Bitmap, Capture.CapturedAt));
 
-        return FilePath;
-    }
+    private string EnsureSaved() => FilePath ??= _fileWriter.Save(Bitmap, Capture.CapturedAt);
 
     [RelayCommand]
     private Task CopyAsync()
@@ -63,7 +59,7 @@ public sealed partial class QuickAccessViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanSave))]
     private Task SaveAsync()
     {
-        EnsureFile();
+        EnsureSaved();
         return ConfirmAndDismissAsync("Saved");
     }
 
@@ -72,7 +68,7 @@ public sealed partial class QuickAccessViewModel : ObservableObject
     [RelayCommand]
     private void RevealInExplorer()
     {
-        var path = EnsureFile();
+        var path = EnsureSaved();
         System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{Path.GetFullPath(path)}\"");
     }
 
