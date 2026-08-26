@@ -1,4 +1,6 @@
 using System.IO;
+using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using NeatShot.Core.Export;
 using NeatShot.Core.Settings;
@@ -33,10 +35,25 @@ public sealed class ImageFileWriter
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
         var encoder = CreateEncoder(format);
-        encoder.Frames.Add(BitmapFrame.Create(image));
+        encoder.Frames.Add(BitmapFrame.Create(format == ImageFormat.Jpeg ? FlattenOnWhite(image) : image));
 
         using var stream = File.Create(path);
         encoder.Save(stream);
+    }
+
+    private static RenderTargetBitmap FlattenOnWhite(BitmapSource image)
+    {
+        var visual = new DrawingVisual();
+        using (var context = visual.RenderOpen())
+        {
+            context.DrawRectangle(Brushes.White, null, new Rect(0, 0, image.PixelWidth, image.PixelHeight));
+            context.DrawImage(image, new Rect(0, 0, image.PixelWidth, image.PixelHeight));
+        }
+
+        var target = new RenderTargetBitmap(image.PixelWidth, image.PixelHeight, image.DpiX, image.DpiY, PixelFormats.Pbgra32);
+        target.Render(visual);
+        target.Freeze();
+        return target;
     }
 
     public static string Extension(ImageFormat format) => format switch

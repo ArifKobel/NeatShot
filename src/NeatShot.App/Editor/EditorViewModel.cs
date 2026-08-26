@@ -49,7 +49,11 @@ public sealed partial class EditorViewModel : ObservableObject
         _save = save;
         _saveAs = saveAs;
 
-        document.Changed += (_, _) => OnPropertyChanged(nameof(Annotations));
+        document.Changed += (_, _) =>
+        {
+            OnPropertyChanged(nameof(Annotations));
+            OnPropertyChanged(nameof(ImageSize));
+        };
         document.HistoryChanged += (_, _) =>
         {
             UndoCommand.NotifyCanExecuteChanged();
@@ -74,7 +78,7 @@ public sealed partial class EditorViewModel : ObservableObject
 
     public IReadOnlyList<double> StrokeWidths { get; } = [2, 4, 6, 10];
 
-    public string ImageSize => $"{Document.Image.Width} × {Document.Image.Height}";
+    public string ImageSize => $"{Document.Canvas.Width} × {Document.Canvas.Height}";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowsObscureStrength))]

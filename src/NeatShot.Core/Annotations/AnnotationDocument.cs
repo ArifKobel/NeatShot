@@ -4,6 +4,8 @@ namespace NeatShot.Core.Annotations;
 
 public sealed class AnnotationDocument
 {
+    private const double CanvasPadding = 8;
+
     private readonly List<Annotation> _annotations = [];
     private readonly EditHistory _history = new();
 
@@ -21,6 +23,28 @@ public sealed class AnnotationDocument
     public CapturedImage Image { get; }
 
     public IReadOnlyList<Annotation> Annotations => _annotations;
+
+    public ImageRect ImageBounds => new(0, 0, Image.Width, Image.Height);
+
+    public ImageRect Canvas
+    {
+        get
+        {
+            var canvas = ImageBounds;
+            foreach (var annotation in _annotations)
+            {
+                var reach = annotation.Bounds.Inflate(CanvasPadding);
+                if (reach.Left < canvas.Left || reach.Top < canvas.Top || reach.Right > canvas.Right || reach.Bottom > canvas.Bottom)
+                {
+                    canvas = canvas.Union(reach);
+                }
+            }
+
+            return ImageRect.FromPoints(
+                new ImagePoint(Math.Floor(canvas.Left), Math.Floor(canvas.Top)),
+                new ImagePoint(Math.Ceiling(canvas.Right), Math.Ceiling(canvas.Bottom)));
+        }
+    }
 
     public bool CanUndo => _history.CanUndo;
 

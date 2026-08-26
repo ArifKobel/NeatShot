@@ -15,16 +15,19 @@ public static class DocumentRenderer
         ArgumentNullException.ThrowIfNull(document);
 
         var image = document.Image;
+        var canvas = document.Canvas;
         var renderer = new AnnotationRenderer(image);
         var visual = new DrawingVisual();
 
         using (var context = visual.RenderOpen())
         {
+            context.PushTransform(new TranslateTransform(-canvas.X, -canvas.Y));
             context.DrawImage(image.ToBitmapSource(), new Rect(0, 0, image.Width, image.Height));
             renderer.Draw(context, document.Annotations);
+            context.Pop();
         }
 
-        var target = new RenderTargetBitmap(image.Width, image.Height, Dpi, Dpi, PixelFormats.Pbgra32);
+        var target = new RenderTargetBitmap((int)canvas.Width, (int)canvas.Height, Dpi, Dpi, PixelFormats.Pbgra32);
         target.Render(visual);
         target.Freeze();
         return target;

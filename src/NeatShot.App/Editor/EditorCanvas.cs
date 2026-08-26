@@ -20,7 +20,10 @@ public sealed class EditorCanvas : FrameworkElement
 
     private const int ShadowLayers = 6;
 
+    private const double CheckerSize = 12;
+
     private static readonly Brush Background = Frozen(new SolidColorBrush(Color.FromRgb(0x15, 0x15, 0x19)));
+    private static readonly Brush Checkerboard = CreateCheckerboard();
     private static readonly Brush ImageShadow = Frozen(new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)));
 
     private double _scale = 1;
@@ -63,11 +66,14 @@ public sealed class EditorCanvas : FrameworkElement
         }
 
         var image = ViewModel.Document.Image;
-        UpdateScale(image.Width, image.Height);
+        var canvas = ViewModel.Document.Canvas;
+        UpdateScale(canvas.Width, canvas.Height);
         var offset = Offset();
+        var canvasRect = new Rect(offset.X + canvas.X * _scale, offset.Y + canvas.Y * _scale, canvas.Width * _scale, canvas.Height * _scale);
 
         drawingContext.DrawRectangle(Background, null, new Rect(RenderSize));
-        DrawShadow(drawingContext, new Rect(offset.X, offset.Y, image.Width * _scale, image.Height * _scale));
+        DrawShadow(drawingContext, canvasRect);
+        drawingContext.DrawRectangle(Checkerboard, null, canvasRect);
         drawingContext.PushTransform(new MatrixTransform(_scale, 0, 0, _scale, offset.X, offset.Y));
 
         drawingContext.DrawImage(ViewModel.Bitmap, new Rect(0, 0, image.Width, image.Height));
@@ -223,7 +229,8 @@ public sealed class EditorCanvas : FrameworkElement
         {
             var anchor = CanvasToImage(e.GetPosition(this));
             ViewModel.ZoomBy(e.Delta > 0 ? WheelZoomStep : 1 / WheelZoomStep);
-            UpdateScale(ViewModel.Document.Image.Width, ViewModel.Document.Image.Height);
+            var canvas = ViewModel.Document.Canvas;
+            UpdateScale(canvas.Width, canvas.Height);
             var moved = ImageToCanvas(anchor);
             _pan += e.GetPosition(this) - moved;
         }
@@ -295,7 +302,7 @@ public sealed class EditorCanvas : FrameworkElement
         _panStart = _pan;
     }
 
-    private void UpdateScale(int imageWidth, int imageHeight)
+    private void UpdateScale(double canvasWidth, double canvasHeight)
     {
         if (ViewModel is null || RenderSize.Width <= 0 || RenderSize.Height <= 0)
         {
@@ -304,7 +311,7 @@ public sealed class EditorCanvas : FrameworkElement
 
         if (ViewModel.FitToWindow)
         {
-            _scale = Math.Min(1, Math.Min((RenderSize.Width - FitPadding * 2) / imageWidth, (RenderSize.Height - FitPadding * 2) / imageHeight));
+            _scale = Math.Min(1, Math.Min((RenderSize.Width - FitPadding * 2) / canvasWidth, (RenderSize.Height - FitPadding * 2) / canvasHeight));
             ViewModel.Zoom = _scale;
         }
         else
@@ -315,11 +322,11 @@ public sealed class EditorCanvas : FrameworkElement
 
     private Point Offset()
     {
-        var image = ViewModel!.Document.Image;
-        _pan = ClampPan(_pan, image.Width * _scale, image.Height * _scale);
+        var canvas = ViewModel!.Document.Canvas;
+        _pan = ClampPan(_pan, canvas.Width * _scale, canvas.Height * _scale);
         return new Point(
-            Math.Round((RenderSize.Width - image.Width * _scale) / 2 + _pan.X),
-            Math.Round((RenderSize.Height - image.Height * _scale) / 2 + _pan.Y));
+            Math.Round((RenderSize.Width - canvas.Width * _scale) / 2 + _pan.X - canvas.X * _scale),
+            Math.Round((RenderSize.Height - canvas.Height * _scale) / 2 + _pan.Y - canvas.Y * _scale));
     }
 
     private Vector ClampPan(Vector pan, double imageWidth, double imageHeight)
@@ -358,6 +365,22 @@ public sealed class EditorCanvas : FrameworkElement
             Handle.Body => Cursors.SizeAll,
             _ => Cursors.Arrow,
         };
+    }
+
+    private static DrawingBrush CreateCheckerboard()
+    {
+        var light = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x31));
+        var dark = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x28));
+        var tile = new DrawingGroup();
+        tile.Children.Add(new GeometryDrawing(dark, null, new RectangleGeometry(new Rect(0, 0, CheckerSize * 2, CheckerSize * 2))));
+        tile.Children.Add(new GeometryDrawing(light, null, new RectangleGeometry(new Rect(0, 0, CheckerSize, CheckerSize))));
+        tile.Children.Add(new GeometryDrawing(light, null, new RectangleGeometry(new Rect(CheckerSize, CheckerSize, CheckerSize, CheckerSize))));
+        return Frozen(new DrawingBrush(tile)
+        {
+            TileMode = TileMode.Tile,
+            ViewportUnits = BrushMappingMode.Absolute,
+            Viewport = new Rect(0, 0, CheckerSize * 2, CheckerSize * 2),
+        });
     }
 
     private static T Frozen<T>(T freezable)
