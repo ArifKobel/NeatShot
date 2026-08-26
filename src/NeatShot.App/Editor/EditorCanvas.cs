@@ -116,7 +116,7 @@ public sealed class EditorCanvas : FrameworkElement
         Focus();
         CaptureMouse();
 
-        if (_spaceHeld)
+        if (_spaceHeld || Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
         {
             BeginPan(e.GetPosition(this));
             return;
@@ -214,7 +214,7 @@ public sealed class EditorCanvas : FrameworkElement
             return;
         }
 
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) || Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
         {
             var anchor = CanvasToImage(e.GetPosition(this));
             ViewModel.ZoomBy(e.Delta > 0 ? WheelZoomStep : 1 / WheelZoomStep);
