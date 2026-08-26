@@ -26,24 +26,25 @@ public sealed class AnnotationDocument
 
     public ImageRect ImageBounds => new(0, 0, Image.Width, Image.Height);
 
-    public ImageRect Canvas
-    {
-        get
-        {
-            var canvas = ImageBounds;
-            foreach (var annotation in _annotations)
-            {
-                var reach = annotation.Bounds.Inflate(CanvasPadding);
-                if (reach.Left < canvas.Left || reach.Top < canvas.Top || reach.Right > canvas.Right || reach.Bottom > canvas.Bottom)
-                {
-                    canvas = canvas.Union(reach);
-                }
-            }
+    public ImageRect Canvas => CanvasAround(_annotations);
 
-            return ImageRect.FromPoints(
-                new ImagePoint(Math.Floor(canvas.Left), Math.Floor(canvas.Top)),
-                new ImagePoint(Math.Ceiling(canvas.Right), Math.Ceiling(canvas.Bottom)));
+    public ImageRect CanvasAround(IEnumerable<Annotation> annotations)
+    {
+        ArgumentNullException.ThrowIfNull(annotations);
+
+        var canvas = ImageBounds;
+        foreach (var annotation in annotations)
+        {
+            var reach = annotation.Bounds.Inflate(CanvasPadding);
+            if (reach.Left < canvas.Left || reach.Top < canvas.Top || reach.Right > canvas.Right || reach.Bottom > canvas.Bottom)
+            {
+                canvas = canvas.Union(reach);
+            }
         }
+
+        return ImageRect.FromPoints(
+            new ImagePoint(Math.Floor(canvas.Left), Math.Floor(canvas.Top)),
+            new ImagePoint(Math.Ceiling(canvas.Right), Math.Ceiling(canvas.Bottom)));
     }
 
     public bool CanUndo => _history.CanUndo;

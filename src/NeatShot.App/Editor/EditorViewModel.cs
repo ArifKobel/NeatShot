@@ -80,6 +80,19 @@ public sealed partial class EditorViewModel : ObservableObject
 
     public string ImageSize => $"{Document.Canvas.Width} × {Document.Canvas.Height}";
 
+    public ImageRect Canvas => Document.CanvasAround(VisibleAnnotations);
+
+    public IEnumerable<Annotation> VisibleAnnotations
+    {
+        get
+        {
+            var annotations = Annotations
+                .Where(a => a != EditingText)
+                .Select(a => Previews.TryGetValue(a.Id, out var preview) ? preview : a);
+            return Preview is { } preview ? annotations.Append(preview) : annotations;
+        }
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowsObscureStrength))]
     public partial EditorTool ActiveTool { get; set; } = EditorTool.Arrow;

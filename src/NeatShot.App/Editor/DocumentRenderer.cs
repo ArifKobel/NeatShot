@@ -22,6 +22,7 @@ public static class DocumentRenderer
         using (var context = visual.RenderOpen())
         {
             context.PushTransform(new TranslateTransform(-canvas.X, -canvas.Y));
+            context.DrawRectangle(Brushes.White, null, new Rect(canvas.X, canvas.Y, canvas.Width, canvas.Height));
             context.DrawImage(image.ToBitmapSource(), new Rect(0, 0, image.Width, image.Height));
             renderer.Draw(context, document.Annotations);
             context.Pop();

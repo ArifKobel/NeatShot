@@ -20,10 +20,8 @@ public sealed class EditorCanvas : FrameworkElement
 
     private const int ShadowLayers = 6;
 
-    private const double CheckerSize = 12;
-
     private static readonly Brush Background = Frozen(new SolidColorBrush(Color.FromRgb(0x15, 0x15, 0x19)));
-    private static readonly Brush Checkerboard = CreateCheckerboard();
+    private static readonly Brush CanvasFill = Frozen(new SolidColorBrush(Colors.White));
     private static readonly Brush ImageShadow = Frozen(new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)));
 
     private double _scale = 1;
@@ -66,30 +64,21 @@ public sealed class EditorCanvas : FrameworkElement
         }
 
         var image = ViewModel.Document.Image;
-        var canvas = ViewModel.Document.Canvas;
+        var canvas = ViewModel.Canvas;
         UpdateScale(canvas.Width, canvas.Height);
         var offset = Offset();
         var canvasRect = new Rect(offset.X + canvas.X * _scale, offset.Y + canvas.Y * _scale, canvas.Width * _scale, canvas.Height * _scale);
 
         drawingContext.DrawRectangle(Background, null, new Rect(RenderSize));
         DrawShadow(drawingContext, canvasRect);
-        drawingContext.DrawRectangle(Checkerboard, null, canvasRect);
+        drawingContext.DrawRectangle(CanvasFill, null, canvasRect);
         drawingContext.PushTransform(new MatrixTransform(_scale, 0, 0, _scale, offset.X, offset.Y));
 
         drawingContext.DrawImage(ViewModel.Bitmap, new Rect(0, 0, image.Width, image.Height));
         ViewModel.Renderer.PixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
         var previews = ViewModel.Previews;
-        var editing = ViewModel.EditingText;
-        var annotations = ViewModel.Annotations
-            .Where(a => a != editing)
-            .Select(a => previews.TryGetValue(a.Id, out var p) ? p : a);
-        if (ViewModel.Preview is { } preview)
-        {
-            annotations = annotations.Append(preview);
-        }
-
-        ViewModel.Renderer.Draw(drawingContext, annotations);
+        ViewModel.Renderer.Draw(drawingContext, ViewModel.VisibleAnnotations);
 
         if (ViewModel.Selection.Count > 0)
         {
@@ -229,7 +218,7 @@ public sealed class EditorCanvas : FrameworkElement
         {
             var anchor = CanvasToImage(e.GetPosition(this));
             ViewModel.ZoomBy(e.Delta > 0 ? WheelZoomStep : 1 / WheelZoomStep);
-            var canvas = ViewModel.Document.Canvas;
+            var canvas = ViewModel.Canvas;
             UpdateScale(canvas.Width, canvas.Height);
             var moved = ImageToCanvas(anchor);
             _pan += e.GetPosition(this) - moved;
@@ -322,7 +311,7 @@ public sealed class EditorCanvas : FrameworkElement
 
     private Point Offset()
     {
-        var canvas = ViewModel!.Document.Canvas;
+        var canvas = ViewModel!.Canvas;
         _pan = ClampPan(_pan, canvas.Width * _scale, canvas.Height * _scale);
         return new Point(
             Math.Round((RenderSize.Width - canvas.Width * _scale) / 2 + _pan.X - canvas.X * _scale),
@@ -365,22 +354,6 @@ public sealed class EditorCanvas : FrameworkElement
             Handle.Body => Cursors.SizeAll,
             _ => Cursors.Arrow,
         };
-    }
-
-    private static DrawingBrush CreateCheckerboard()
-    {
-        var light = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x31));
-        var dark = new SolidColorBrush(Color.FromRgb(0x22, 0x22, 0x28));
-        var tile = new DrawingGroup();
-        tile.Children.Add(new GeometryDrawing(dark, null, new RectangleGeometry(new Rect(0, 0, CheckerSize * 2, CheckerSize * 2))));
-        tile.Children.Add(new GeometryDrawing(light, null, new RectangleGeometry(new Rect(0, 0, CheckerSize, CheckerSize))));
-        tile.Children.Add(new GeometryDrawing(light, null, new RectangleGeometry(new Rect(CheckerSize, CheckerSize, CheckerSize, CheckerSize))));
-        return Frozen(new DrawingBrush(tile)
-        {
-            TileMode = TileMode.Tile,
-            ViewportUnits = BrushMappingMode.Absolute,
-            Viewport = new Rect(0, 0, CheckerSize * 2, CheckerSize * 2),
-        });
     }
 
     private static T Frozen<T>(T freezable)
