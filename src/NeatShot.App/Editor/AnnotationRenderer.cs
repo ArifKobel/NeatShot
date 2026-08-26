@@ -184,10 +184,7 @@ public sealed class AnnotationRenderer
             new SolidColorBrush(ToColor(text.Style.Color)),
             PixelsPerDip);
 
-        var origin = ToPoint(text.Position);
-        var shadow = new SolidColorBrush(Color.FromArgb(0x70, 0, 0, 0));
-        context.DrawGeometry(null, new Pen(shadow, Math.Max(1, text.FontSize / 14)) { LineJoin = PenLineJoin.Round }, formatted.BuildGeometry(origin));
-        context.DrawText(formatted, origin);
+        context.DrawText(formatted, ToPoint(text.Position));
     }
 
     private void DrawCounter(DrawingContext context, CounterAnnotation counter)

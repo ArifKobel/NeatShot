@@ -103,6 +103,9 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial ImagePoint? PendingTextPosition { get; private set; }
 
     [ObservableProperty]
+    public partial TextAnnotation? EditingText { get; private set; }
+
+    [ObservableProperty]
     public partial string? StatusMessage { get; private set; }
 
     [ObservableProperty]
@@ -276,18 +279,51 @@ public sealed partial class EditorViewModel : ObservableObject
         }
     }
 
+    public bool BeginTextEdit(ImagePoint point)
+    {
+        if (Document.HitTest(point) is not TextAnnotation text)
+        {
+            return false;
+        }
+
+        Selection = [];
+        EditingText = text;
+        PendingTextPosition = text.Position;
+        return true;
+    }
+
     public void CommitText(string text, double width, double height)
     {
+        var editing = EditingText;
+        EditingText = null;
+
         if (PendingTextPosition is { } position && !string.IsNullOrWhiteSpace(text))
         {
             var extent = new ImageRect(position.X, position.Y, width, height);
-            Commit(new TextAnnotation(position, text.Trim(), CurrentStyle, FontSize, extent));
+            if (editing is null)
+            {
+                Commit(new TextAnnotation(position, text.Trim(), CurrentStyle, FontSize, extent));
+            }
+            else
+            {
+                var updated = editing with { Text = text.Trim(), Extent = extent };
+                Document.Execute(new ReplaceAnnotationCommand(editing, updated));
+                Selection = [updated];
+            }
+        }
+        else if (editing is not null)
+        {
+            Document.Execute(new RemoveAnnotationCommand(editing));
         }
 
         PendingTextPosition = null;
     }
 
-    public void CancelText() => PendingTextPosition = null;
+    public void CancelText()
+    {
+        EditingText = null;
+        PendingTextPosition = null;
+    }
 
     public void ZoomBy(double factor)
     {

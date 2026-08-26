@@ -74,7 +74,10 @@ public sealed class EditorCanvas : FrameworkElement
         ViewModel.Renderer.PixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
         var previews = ViewModel.Previews;
-        var annotations = ViewModel.Annotations.Select(a => previews.TryGetValue(a.Id, out var p) ? p : a);
+        var editing = ViewModel.EditingText;
+        var annotations = ViewModel.Annotations
+            .Where(a => a != editing)
+            .Select(a => previews.TryGetValue(a.Id, out var p) ? p : a);
         if (ViewModel.Preview is { } preview)
         {
             annotations = annotations.Append(preview);
@@ -121,6 +124,12 @@ public sealed class EditorCanvas : FrameworkElement
         if (_spaceHeld)
         {
             BeginPan(e.GetPosition(this));
+            return;
+        }
+
+        if (e.ClickCount == 2 && ViewModel?.ActiveTool == EditorTool.Select && ViewModel.BeginTextEdit(CanvasToImage(e.GetPosition(this))))
+        {
+            ReleaseMouseCapture();
             return;
         }
 

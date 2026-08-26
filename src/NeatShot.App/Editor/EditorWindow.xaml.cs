@@ -45,10 +45,11 @@ public partial class EditorWindow : Window
             return;
         }
 
-        var color = _viewModel.Color;
+        var editing = _viewModel.EditingText;
+        var color = editing?.Style.Color ?? _viewModel.Color;
         var origin = Surface.ImageToCanvas(position);
-        TextEntry.Text = string.Empty;
-        TextEntry.FontSize = _viewModel.FontSize * Surface.Scale;
+        TextEntry.Text = editing?.Text ?? string.Empty;
+        TextEntry.FontSize = (editing?.FontSize ?? _viewModel.FontSize) * Surface.Scale;
         var brush = new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B));
         TextEntry.Foreground = brush;
         TextEntry.CaretBrush = brush;
@@ -56,6 +57,7 @@ public partial class EditorWindow : Window
         Canvas.SetTop(TextEntry, origin.Y);
         TextEntry.Visibility = Visibility.Visible;
         TextEntry.Focus();
+        TextEntry.CaretIndex = TextEntry.Text.Length;
     }
 
     private void OnTextInputKeyDown(object sender, KeyEventArgs e)
@@ -81,7 +83,8 @@ public partial class EditorWindow : Window
             return;
         }
 
-        var size = AnnotationRenderer.MeasureText(TextEntry.Text, _viewModel.FontSize, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+        var fontSize = _viewModel.EditingText?.FontSize ?? _viewModel.FontSize;
+        var size = AnnotationRenderer.MeasureText(TextEntry.Text, fontSize, VisualTreeHelper.GetDpi(this).PixelsPerDip);
         _viewModel.CommitText(TextEntry.Text, size.Width, size.Height);
         Surface.Focus();
     }
