@@ -381,11 +381,12 @@
           <KeyBinding Key="B" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static editor:EditorTool.Blur}" />
         </editor:EditorCanvas.InputBindings>
       </editor:EditorCanvas>
-      <Canvas x:Name="TextLayer" IsHitTestVisible="False">
+      <Canvas x:Name="TextLayer">
         <TextBox x:Name="TextEntry"
                  Visibility="Collapsed"
-                 IsHitTestVisible="True"
                  MinWidth="4"
+                 SelectionBrush="{StaticResource AccentBrush}"
+                 SelectionOpacity="0.45"
                  Padding="0"
                  Background="Transparent"
                  BorderThickness="0"
