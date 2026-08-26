@@ -124,7 +124,7 @@ public sealed partial class EditorViewModel : ObservableObject
     {
         if (PrimarySelection is not { } selected)
         {
-            return Document.HitTest(point) is not null ? Handle.Body : Handle.None;
+            return HitAnnotation(point) is not null ? Handle.Body : Handle.None;
         }
 
         if (selected is ArrowAnnotation arrow)
@@ -150,8 +150,11 @@ public sealed partial class EditorViewModel : ObservableObject
             }
         }
 
-        return Document.HitTest(point) is not null ? Handle.Body : Handle.None;
+        return HitAnnotation(point) is not null ? Handle.Body : Handle.None;
     }
+
+    public Annotation? HitAnnotation(ImagePoint point) =>
+        Selection.FirstOrDefault(a => a.Bounds.Contains(point)) ?? Document.HitTest(point);
 
     public static IEnumerable<(Handle Handle, ImagePoint Position)> HandlePositions(ImageRect bounds)
     {
@@ -268,7 +271,7 @@ public sealed partial class EditorViewModel : ObservableObject
 
     public void SelectAt(ImagePoint point)
     {
-        var hit = Document.HitTest(point);
+        var hit = HitAnnotation(point);
         if (hit is null)
         {
             Selection = [];
@@ -281,7 +284,7 @@ public sealed partial class EditorViewModel : ObservableObject
 
     public bool BeginTextEdit(ImagePoint point)
     {
-        if (Document.HitTest(point) is not TextAnnotation text)
+        if (HitAnnotation(point) is not TextAnnotation text)
         {
             return false;
         }
@@ -308,6 +311,7 @@ public sealed partial class EditorViewModel : ObservableObject
             {
                 var updated = editing with { Text = text.Trim(), Extent = extent };
                 Document.Execute(new ReplaceAnnotationCommand(editing, updated));
+                ActiveTool = EditorTool.Select;
                 Selection = [updated];
             }
         }
@@ -343,7 +347,7 @@ public sealed partial class EditorViewModel : ObservableObject
             return;
         }
 
-        var hit = Document.HitTest(point);
+        var hit = HitAnnotation(point);
         if (hit is null)
         {
             if (!extend)
@@ -453,7 +457,8 @@ public sealed partial class EditorViewModel : ObservableObject
     private void Commit(Annotation annotation)
     {
         Document.Execute(new AddAnnotationCommand(annotation));
-        Selection = [];
+        ActiveTool = EditorTool.Select;
+        Selection = [annotation];
     }
 
     private void Restyle(Func<Annotation, Annotation> change)
