@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NeatShot.Composition;
 using NeatShot.Core.Settings;
+using NeatShot.Editor;
 using NeatShot.Tray;
 
 namespace NeatShot;
@@ -23,6 +24,12 @@ public partial class App : Application
         await _host.StartAsync();
 
         _host.Services.GetRequiredService<TrayController>().Show();
+
+        var editIndex = Array.IndexOf(e.Args, "--edit");
+        if (editIndex >= 0 && editIndex + 1 < e.Args.Length)
+        {
+            _host.Services.GetRequiredService<EditorService>().Open(e.Args[editIndex + 1]);
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

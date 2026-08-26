@@ -4,6 +4,7 @@ using Microsoft.Win32;
 using NeatShot.Core.Annotations;
 using NeatShot.Core.Settings;
 using NeatShot.Export;
+using NeatShot.Imaging;
 
 namespace NeatShot.Editor;
 
@@ -16,6 +17,18 @@ public sealed class EditorService
     {
         _fileWriter = fileWriter;
         _settings = settings;
+    }
+
+    public void Open(string imagePath)
+    {
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.UriSource = new Uri(Path.GetFullPath(imagePath));
+        bitmap.EndInit();
+
+        var image = bitmap.ToCapturedImage();
+        Open(new Core.Capture.Capture(image, new Core.Capture.PixelRect(0, 0, image.Width, image.Height), Core.Capture.CaptureMode.Fullscreen, File.GetLastWriteTime(imagePath)));
     }
 
     public void Open(Core.Capture.Capture capture)
