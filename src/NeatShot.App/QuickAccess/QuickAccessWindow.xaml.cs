@@ -20,6 +20,7 @@ public partial class QuickAccessWindow : Window
     private const int SwipeAwayZone = 40;
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(220));
     private static readonly Duration MoveDuration = new(TimeSpan.FromMilliseconds(260));
+    private static readonly Duration ConfirmDuration = new(TimeSpan.FromMilliseconds(180));
 
     private readonly QuickAccessViewModel _viewModel;
     private readonly ICursorLocator _cursor;
@@ -37,7 +38,14 @@ public partial class QuickAccessWindow : Window
         _screen = screen;
         _cursor = cursor;
 
-        viewModel.Dismissed += (_, _) => Close();
+        viewModel.Dismissed += (_, _) => SlideOut();
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(QuickAccessViewModel.Confirmation) && viewModel.Confirmation is not null)
+            {
+                PopConfirmation();
+            }
+        };
         Card.SizeChanged += (_, e) => CardClip.Rect = new Rect(e.NewSize);
         Card.PreviewMouseLeftButtonDown += OnCardMouseDown;
         Card.PreviewMouseMove += OnCardMouseMove;
@@ -111,6 +119,27 @@ public partial class QuickAccessWindow : Window
             new DoubleAnimation(0, SlideDuration) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
     }
 
+    private void SlideOut()
+    {
+        var offset = new TranslateTransform();
+        Root.RenderTransform = offset;
+        Root.IsHitTestVisible = false;
+
+        var slide = new DoubleAnimation(-Card.Width, SlideDuration) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
+        slide.Completed += (_, _) => Close();
+        offset.BeginAnimation(TranslateTransform.XProperty, slide);
+        Root.BeginAnimation(OpacityProperty, new DoubleAnimation(0, SlideDuration));
+    }
+
+    private void PopConfirmation()
+    {
+        var scale = (ScaleTransform)ConfirmationContent.RenderTransform;
+        var grow = new DoubleAnimation(0.6, 1, ConfirmDuration) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.6 } };
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+        ConfirmationVeil.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, ConfirmDuration));
+    }
+
     private void OnCardMouseDown(object sender, MouseButtonEventArgs e)
     {
         _dragOrigin = e.GetPosition(this);
@@ -141,7 +170,7 @@ public partial class QuickAccessWindow : Window
 
         if (_cursor.GetPosition().X < _screen.WorkArea.Left + SwipeAwayZone * _screen.ScaleFactor)
         {
-            Close();
+            SlideOut();
         }
     }
 }

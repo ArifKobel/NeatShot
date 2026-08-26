@@ -114,8 +114,11 @@
                 Content="&#xE711;"
                 Command="{Binding DismissCommand}" />
 
-        <Border Background="#CC1A1A20" Visibility="{Binding Confirmation, Converter={StaticResource NullToVisibility}}">
-          <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Border x:Name="ConfirmationVeil" Background="#CC1A1A20" Visibility="{Binding Confirmation, Converter={StaticResource NullToVisibility}}">
+          <StackPanel x:Name="ConfirmationContent" VerticalAlignment="Center" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+            <StackPanel.RenderTransform>
+              <ScaleTransform />
+            </StackPanel.RenderTransform>
             <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="22" Foreground="#F2F2F5" HorizontalAlignment="Center" Text="&#xE73E;" />
             <TextBlock Margin="0,6,0,0" FontSize="12" Foreground="#F2F2F5" HorizontalAlignment="Center" Text="{Binding Confirmation}" />
           </StackPanel>
