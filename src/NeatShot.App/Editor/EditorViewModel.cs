@@ -106,9 +106,6 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial TextAnnotation? EditingText { get; private set; }
 
     [ObservableProperty]
-    public partial string? StatusMessage { get; private set; }
-
-    [ObservableProperty]
     public partial double Zoom { get; set; } = 1;
 
     [ObservableProperty]
@@ -602,23 +599,22 @@ public sealed partial class EditorViewModel : ObservableObject
     private void Copy()
     {
         Export.ClipboardImageService.SetImage(DocumentRenderer.Render(Document));
-        StatusMessage = "Copied to clipboard";
+        Close();
     }
 
     [RelayCommand]
     private void Save()
     {
-        var path = _save(DocumentRenderer.Render(Document));
-        StatusMessage = $"Saved to {path}";
+        _save(DocumentRenderer.Render(Document));
+        Close();
     }
 
     [RelayCommand]
     private void SaveAs()
     {
-        var path = _saveAs(DocumentRenderer.Render(Document));
-        if (path is not null)
+        if (_saveAs(DocumentRenderer.Render(Document)) is not null)
         {
-            StatusMessage = $"Saved to {path}";
+            Close();
         }
     }
 
