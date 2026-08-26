@@ -27,6 +27,7 @@ public partial class OverlayWindow : Window
 
         _handle = new WindowInteropHelper(this).EnsureHandle();
         WindowPlacement.DisableTransitions(_handle);
+        WindowPlacement.HideFromSwitcher(_handle);
     }
 
     public ScreenInfo Screen { get; }

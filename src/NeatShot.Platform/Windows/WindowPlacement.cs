@@ -28,6 +28,13 @@ public static class WindowPlacement
         _ = PInvoke.DwmSetWindowAttribute(new HWND(handle), DWMWINDOWATTRIBUTE.DWMWA_CAPTION_COLOR, &color, (uint)sizeof(COLORREF));
     }
 
+    public static void HideFromSwitcher(nint handle)
+    {
+        var window = new HWND(handle);
+        var style = (WINDOW_EX_STYLE)PInvoke.GetWindowLong(window, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+        _ = PInvoke.SetWindowLong(window, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)(style | WINDOW_EX_STYLE.WS_EX_TOOLWINDOW));
+    }
+
     public static void MoveToPixels(nint handle, PixelRect bounds, bool topmost)
     {
         var insertAfter = topmost ? HWND.HWND_TOPMOST : HWND.Null;

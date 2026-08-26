@@ -106,6 +106,7 @@ public partial class QuickAccessWindow : Window
         base.OnSourceInitialized(e);
         _handle = new WindowInteropHelper(this).Handle;
         WindowPlacement.DisableTransitions(_handle);
+        WindowPlacement.HideFromSwitcher(_handle);
         ApplyMove();
         SlideIn();
     }
