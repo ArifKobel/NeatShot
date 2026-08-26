@@ -4,19 +4,82 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:tray="clr-namespace:NeatShot.Tray"
+             xmlns:icons="clr-namespace:NeatShot.Icons"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance tray:TrayMenuViewModel}">
+             d:DataContext="{d:DesignInstance tray:TrayMenuViewModel}"
+             FontFamily="Segoe UI Variable Text, Segoe UI"
+             FontSize="13"
+             UseLayoutRounding="True">
+  <ContextMenu.Resources>
+    <Style TargetType="MenuItem">
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Setter Property="Height" Value="30" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="MenuItem">
+            <Border x:Name="Chrome" Background="Transparent" CornerRadius="6" Margin="4,1" Padding="8,0">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="24" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <icons:Icon Grid.Column="0" Data="{TemplateBinding Icon}" Stroke="{TemplateBinding Foreground}" Size="15" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center" Margin="4,0,24,0" />
+                <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}" Foreground="{StaticResource MutedBrush}" FontSize="12" VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsHighlighted" Value="True">
+                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource AccentBrush}" />
+                <Setter Property="Foreground" Value="White" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="Separator">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Separator">
+            <Rectangle Height="1" Fill="{StaticResource DividerBrush}" Margin="8,4" />
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </ContextMenu.Resources>
+
+  <ContextMenu.Template>
+    <ControlTemplate TargetType="ContextMenu">
+      <Border Background="{StaticResource PopoverBrush}" BorderBrush="{StaticResource DividerBrush}" BorderThickness="1" CornerRadius="10" Padding="0,4" Margin="8">
+        <Border.Effect>
+          <DropShadowEffect BlurRadius="16" ShadowDepth="3" Opacity="0.5" />
+        </Border.Effect>
+        <StackPanel IsItemsHost="True" />
+      </Border>
+    </ControlTemplate>
+  </ContextMenu.Template>
+
   <MenuItem Header="Capture Region"
+            Icon="{StaticResource IconSquareDashed}"
             InputGestureText="{Binding CaptureRegionShortcut}"
             Command="{Binding CaptureRegionCommand}" />
   <MenuItem Header="Capture Window"
+            Icon="{StaticResource IconAppWindow}"
             InputGestureText="{Binding CaptureWindowShortcut}"
             Command="{Binding CaptureWindowCommand}" />
   <MenuItem Header="Capture Fullscreen"
+            Icon="{StaticResource IconMonitor}"
             InputGestureText="{Binding CaptureFullscreenShortcut}"
             Command="{Binding CaptureFullscreenCommand}" />
   <Separator />
-  <MenuItem Header="Settings…" Command="{Binding OpenSettingsCommand}" />
+  <MenuItem Header="Settings"
+            Icon="{StaticResource IconSettings}"
+            Command="{Binding OpenSettingsCommand}" />
   <Separator />
-  <MenuItem Header="Quit NeatShot" Command="{Binding ExitCommand}" />
+  <MenuItem Header="Quit NeatShot"
+            Icon="{StaticResource IconPower}"
+            Command="{Binding ExitCommand}" />
 </ContextMenu>
