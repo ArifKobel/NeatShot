@@ -46,6 +46,7 @@ public sealed partial class EditorViewModel : ObservableObject
         Document = document;
         Bitmap = document.Image.ToBitmapSource();
         Renderer = new AnnotationRenderer(document.Image);
+        CanvasBackground = EdgeColor.Dominant(document.Image);
         _save = save;
         _saveAs = saveAs;
 
@@ -101,7 +102,7 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial int ObscureStrength { get; set; } = ObscureAnnotation.DefaultStrength;
 
     [ObservableProperty]
-    public partial Rgba CanvasBackground { get; set; } = new(0x15, 0x15, 0x1A);
+    public partial Rgba CanvasBackground { get; set; }
 
     [ObservableProperty]
     public partial Rgba Color { get; set; } = Rgba.Red;
