@@ -20,6 +20,11 @@ public sealed class EditorCanvas : FrameworkElement
 
     private static readonly Brush Background = Frozen(new SolidColorBrush(Color.FromRgb(0x15, 0x15, 0x19)));
 
+    private readonly VisualCollection _layers;
+    private readonly DrawingVisual _imageLayer = new();
+    private readonly DrawingVisual _annotationLayer = new();
+    private readonly MatrixTransform _viewTransform = new();
+    private bool _annotationsDirty = true;
     private double _scale = 1;
     private Vector _pan;
     private Point _panOrigin;
@@ -30,7 +35,15 @@ public sealed class EditorCanvas : FrameworkElement
     public EditorCanvas()
     {
         ClipToBounds = true;
+        _imageLayer.Transform = _viewTransform;
+        _annotationLayer.Transform = _viewTransform;
+        RenderOptions.SetBitmapScalingMode(_imageLayer, BitmapScalingMode.Linear);
+        _layers = new VisualCollection(this) { _imageLayer, _annotationLayer };
     }
+
+    protected override int VisualChildrenCount => _layers.Count;
+
+    protected override Visual GetVisualChild(int index) => _layers[index];
 
     public EditorViewModel? ViewModel
     {
@@ -67,27 +80,54 @@ public sealed class EditorCanvas : FrameworkElement
         var background = ViewModel.CanvasBackground;
 
         drawingContext.DrawRectangle(Background, null, new Rect(RenderSize));
-        drawingContext.DrawRectangle(new SolidColorBrush(Color.FromArgb(background.A, background.R, background.G, background.B)), null, canvasRect);
-        drawingContext.PushTransform(new MatrixTransform(_scale, 0, 0, _scale, offset.X, offset.Y));
+        drawingContext.DrawRectangle(Frozen(new SolidColorBrush(Color.FromArgb(background.A, background.R, background.G, background.B))), null, canvasRect);
 
-        drawingContext.DrawImage(ViewModel.Bitmap, new Rect(0, 0, image.Width, image.Height));
-        ViewModel.Renderer.PixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-
-        var previews = ViewModel.Previews;
-        ViewModel.Renderer.Draw(drawingContext, ViewModel.VisibleAnnotations);
-
-        if (ViewModel.Selection.Count > 0)
+        var matrix = new Matrix(_scale, 0, 0, _scale, offset.X, offset.Y);
+        if (_viewTransform.Matrix != matrix)
         {
-            var selection = ViewModel.Selection.Select(a => previews.TryGetValue(a.Id, out var p) ? p : a).ToArray();
-            AnnotationRenderer.DrawSelection(drawingContext, selection, _scale);
+            _annotationsDirty |= _viewTransform.Matrix.M11 != matrix.M11;
+            _viewTransform.Matrix = matrix;
         }
 
-        if (ViewModel.Marquee is { } marquee)
+        if (_annotationsDirty)
         {
-            AnnotationRenderer.DrawMarquee(drawingContext, marquee, _scale);
+            DrawAnnotations();
+            _annotationsDirty = false;
+        }
+    }
+
+    private void DrawImageLayer()
+    {
+        using var context = _imageLayer.RenderOpen();
+        if (ViewModel is { } viewModel)
+        {
+            var image = viewModel.Document.Image;
+            context.DrawImage(viewModel.Bitmap, new Rect(0, 0, image.Width, image.Height));
+        }
+    }
+
+    private void DrawAnnotations()
+    {
+        using var context = _annotationLayer.RenderOpen();
+        if (ViewModel is not { } viewModel)
+        {
+            return;
         }
 
-        drawingContext.Pop();
+        viewModel.Renderer.PixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        viewModel.Renderer.Draw(context, viewModel.VisibleAnnotations);
+
+        var previews = viewModel.Previews;
+        if (viewModel.Selection.Count > 0)
+        {
+            var selection = viewModel.Selection.Select(a => previews.TryGetValue(a.Id, out var p) ? p : a).ToArray();
+            AnnotationRenderer.DrawSelection(context, selection, _scale);
+        }
+
+        if (viewModel.Marquee is { } marquee)
+        {
+            AnnotationRenderer.DrawMarquee(context, marquee, _scale);
+        }
     }
 
     protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
@@ -251,6 +291,8 @@ public sealed class EditorCanvas : FrameworkElement
             next.PropertyChanged += canvas.OnViewModelPropertyChanged;
         }
 
+        canvas.DrawImageLayer();
+        canvas._annotationsDirty = true;
         canvas.InvalidateVisual();
     }
 
@@ -266,6 +308,7 @@ public sealed class EditorCanvas : FrameworkElement
             UpdateCursor(Mouse.GetPosition(this));
         }
 
+        _annotationsDirty = true;
         InvalidateVisual();
     }
 
