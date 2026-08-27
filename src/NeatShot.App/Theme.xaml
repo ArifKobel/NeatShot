@@ -1,0 +1,17 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Geometry x:Key="IconCounter">M2,12 A10,10 0 1 0 22,12 A10,10 0 1 0 2,12 M9.5,9.5 L12.5,7 V17</Geometry>
+
+  <SolidColorBrush x:Key="ChromeBrush" Color="#1E1E24" />
+  <SolidColorBrush x:Key="WellBrush" Color="#15151A" />
+  <SolidColorBrush x:Key="PopoverBrush" Color="#2A2A31" />
+  <SolidColorBrush x:Key="EdgeBrush" Color="#0F0F12" />
+  <SolidColorBrush x:Key="TextBrush" Color="#ECECF1" />
+  <SolidColorBrush x:Key="MutedBrush" Color="#9A9AA6" />
+  <SolidColorBrush x:Key="DisabledBrush" Color="#4A4A54" />
+  <SolidColorBrush x:Key="AccentBrush" Color="#2E8CFF" />
+  <SolidColorBrush x:Key="AccentHoverBrush" Color="#4D9DFF" />
+  <SolidColorBrush x:Key="HoverBrush" Color="#14FFFFFF" />
+  <SolidColorBrush x:Key="ActiveBrush" Color="#22FFFFFF" />
+  <SolidColorBrush x:Key="DividerBrush" Color="#26FFFFFF" />
+</ResourceDictionary>
