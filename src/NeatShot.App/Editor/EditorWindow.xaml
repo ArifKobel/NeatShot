@@ -184,11 +184,13 @@
     </Style>
 
     <ContextMenu x:Key="CanvasMenu">
-      <MenuItem Header="Delete" InputGestureText="Del" Command="{Binding DeleteSelectionCommand}" />
+      <MenuItem Header="Cut" InputGestureText="Ctrl+X" Command="{Binding CutCommand}" />
+      <MenuItem Header="Paste" InputGestureText="Ctrl+V" Command="{Binding PasteCommand}" />
       <MenuItem Header="Duplicate" InputGestureText="Ctrl+D" Command="{Binding DuplicateCommand}" />
+      <MenuItem Header="Delete" InputGestureText="Del" Command="{Binding DeleteSelectionCommand}" />
       <Separator />
-      <MenuItem Header="Bring to front" Command="{Binding BringToFrontCommand}" />
-      <MenuItem Header="Send to back" Command="{Binding SendToBackCommand}" />
+      <MenuItem Header="Bring to front" InputGestureText="Ctrl+]" Command="{Binding BringToFrontCommand}" />
+      <MenuItem Header="Send to back" InputGestureText="Ctrl+[" Command="{Binding SendToBackCommand}" />
       <Separator />
       <MenuItem Header="Select all" InputGestureText="Ctrl+A" Command="{Binding SelectAllCommand}" />
       <Separator />
@@ -358,7 +360,12 @@
           <KeyBinding Modifiers="Ctrl" Key="Z" Command="{Binding UndoCommand}" />
           <KeyBinding Modifiers="Ctrl" Key="Y" Command="{Binding RedoCommand}" />
           <KeyBinding Modifiers="Ctrl+Shift" Key="Z" Command="{Binding RedoCommand}" />
-          <KeyBinding Modifiers="Ctrl" Key="C" Command="{Binding CopyCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="C" Command="{Binding CopyShortcutCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="X" Command="{Binding CutCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="V" Command="{Binding PasteCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="W" Command="{Binding CloseCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="OemCloseBrackets" Command="{Binding BringToFrontCommand}" />
+          <KeyBinding Modifiers="Ctrl" Key="OemOpenBrackets" Command="{Binding SendToBackCommand}" />
           <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding SaveCommand}" />
           <KeyBinding Modifiers="Ctrl+Shift" Key="S" Command="{Binding SaveAsCommand}" />
           <KeyBinding Modifiers="Ctrl" Key="A" Command="{Binding SelectAllCommand}" />
@@ -376,6 +383,10 @@
           <KeyBinding Key="Right" Command="{Binding NudgeCommand}" CommandParameter="right" />
           <KeyBinding Key="Up" Command="{Binding NudgeCommand}" CommandParameter="up" />
           <KeyBinding Key="Down" Command="{Binding NudgeCommand}" CommandParameter="down" />
+          <KeyBinding Modifiers="Shift" Key="Left" Command="{Binding NudgeCommand}" CommandParameter="left-fast" />
+          <KeyBinding Modifiers="Shift" Key="Right" Command="{Binding NudgeCommand}" CommandParameter="right-fast" />
+          <KeyBinding Modifiers="Shift" Key="Up" Command="{Binding NudgeCommand}" CommandParameter="up-fast" />
+          <KeyBinding Modifiers="Shift" Key="Down" Command="{Binding NudgeCommand}" CommandParameter="down-fast" />
           <KeyBinding Key="V" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static editor:EditorTool.Select}" />
           <KeyBinding Key="A" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static editor:EditorTool.Arrow}" />
           <KeyBinding Key="R" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static editor:EditorTool.Rectangle}" />

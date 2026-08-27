@@ -28,6 +28,8 @@ public sealed partial class EditorViewModel : ObservableObject
     public const double MaxFontSize = 96;
     private const double DefaultFontSize = 28;
     private const double MinimumDragDistance = 2;
+    private const double PasteOffset = 12;
+    private const double FastNudge = 10;
     private const double MinimumShapeSize = 2;
     private const double MinZoom = 0.1;
     private const double MaxZoom = 8;
@@ -38,6 +40,7 @@ public sealed partial class EditorViewModel : ObservableObject
     private Handle _activeHandle;
     private IReadOnlyList<Annotation> _dragOrigins = [];
     private List<ImagePoint>? _strokePoints;
+    private Annotation[] _clipboard = [];
     private bool _dragging;
 
     public EditorViewModel(
@@ -117,7 +120,7 @@ public sealed partial class EditorViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelection), nameof(ShowsObscureStrength), nameof(ShowsFontSize))]
-    [NotifyCanExecuteChangedFor(nameof(DeleteSelectionCommand), nameof(DuplicateCommand), nameof(BringToFrontCommand), nameof(SendToBackCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteSelectionCommand), nameof(DuplicateCommand), nameof(BringToFrontCommand), nameof(SendToBackCommand), nameof(CutCommand))]
     public partial IReadOnlyList<Annotation> Selection { get; private set; } = [];
 
     [ObservableProperty]
@@ -583,11 +586,49 @@ public sealed partial class EditorViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(HasSelection))]
-    private void Duplicate()
+    private void Duplicate() => Insert(Selection.Select(a => a.Duplicate().Translate(PasteOffset, PasteOffset)).ToArray());
+
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void Cut()
     {
-        var copies = Selection.Select(a => a.Duplicate().Translate(12, 12)).ToArray();
-        Document.Execute(new CompositeCommand(copies.Select(a => (IEditCommand)new AddAnnotationCommand(a)).ToArray()));
-        Selection = copies;
+        CopyToClipboard();
+        DeleteSelection();
+    }
+
+    [RelayCommand]
+    private void CopyShortcut()
+    {
+        if (HasSelection)
+        {
+            CopyToClipboard();
+        }
+        else
+        {
+            Copy();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanPaste))]
+    private void Paste()
+    {
+        var copies = _clipboard.Select(a => a.Duplicate().Translate(PasteOffset, PasteOffset)).ToArray();
+        _clipboard = copies;
+        Insert(copies);
+    }
+
+    private bool CanPaste() => _clipboard.Length > 0;
+
+    private void CopyToClipboard()
+    {
+        _clipboard = [.. Selection];
+        PasteCommand.NotifyCanExecuteChanged();
+    }
+
+    private void Insert(Annotation[] annotations)
+    {
+        Document.Execute(new CompositeCommand(annotations.Select(a => (IEditCommand)new AddAnnotationCommand(a)).ToArray()));
+        ActiveTool = EditorTool.Select;
+        Selection = annotations;
     }
 
     [RelayCommand(CanExecute = nameof(HasSelection))]
@@ -627,12 +668,13 @@ public sealed partial class EditorViewModel : ObservableObject
     [RelayCommand]
     private void Nudge(string direction)
     {
+        var step = direction.EndsWith("-fast", StringComparison.Ordinal) ? FastNudge : 1;
         var (dx, dy) = direction switch
         {
-            "left" => (-1, 0),
-            "right" => (1, 0),
-            "up" => (0, -1),
-            _ => (0, 1),
+            "left" or "left-fast" => (-step, 0d),
+            "right" or "right-fast" => (step, 0d),
+            "up" or "up-fast" => (0d, -step),
+            _ => (0d, step),
         };
         if (Selection.Count == 0)
         {
