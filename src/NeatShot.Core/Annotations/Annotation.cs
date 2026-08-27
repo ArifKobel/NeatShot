@@ -5,6 +5,11 @@ public sealed record AnnotationStyle(Rgba Color, double StrokeWidth)
     public static AnnotationStyle Default => new(Rgba.Red, 4);
 }
 
+public interface IStyledAnnotation
+{
+    AnnotationStyle Style { get; }
+}
+
 public abstract record Annotation
 {
     private const double HitTolerance = 6;
@@ -30,7 +35,7 @@ public abstract record Annotation
     protected static double Tolerance => HitTolerance;
 }
 
-public sealed record RectangleAnnotation(ImageRect Rect, AnnotationStyle Style) : Annotation
+public sealed record RectangleAnnotation(ImageRect Rect, AnnotationStyle Style) : Annotation, IStyledAnnotation
 {
     public override ImageRect Bounds => Rect;
 
@@ -43,7 +48,7 @@ public sealed record RectangleAnnotation(ImageRect Rect, AnnotationStyle Style) 
     public override Annotation WithStrokeWidth(double width) => this with { Style = Style with { StrokeWidth = width } };
 }
 
-public sealed record EllipseAnnotation(ImageRect Rect, AnnotationStyle Style) : Annotation
+public sealed record EllipseAnnotation(ImageRect Rect, AnnotationStyle Style) : Annotation, IStyledAnnotation
 {
     public override ImageRect Bounds => Rect;
 
@@ -70,7 +75,7 @@ public sealed record EllipseAnnotation(ImageRect Rect, AnnotationStyle Style) : 
     }
 }
 
-public sealed record ArrowAnnotation(ImagePoint Start, ImagePoint End, AnnotationStyle Style) : Annotation
+public sealed record ArrowAnnotation(ImagePoint Start, ImagePoint End, AnnotationStyle Style) : Annotation, IStyledAnnotation
 {
     public override ImageRect Bounds => ImageRect.FromPoints(Start, End);
 
@@ -89,7 +94,7 @@ public sealed record ArrowAnnotation(ImagePoint Start, ImagePoint End, Annotatio
         point.DistanceToSegment(Start, End) <= Style.StrokeWidth / 2 + Tolerance;
 }
 
-public sealed record FreehandAnnotation(IReadOnlyList<ImagePoint> Points, AnnotationStyle Style) : Annotation
+public sealed record FreehandAnnotation(IReadOnlyList<ImagePoint> Points, AnnotationStyle Style) : Annotation, IStyledAnnotation
 {
     public override ImageRect Bounds => Points.Count == 0
         ? default
@@ -132,7 +137,7 @@ public sealed record FreehandAnnotation(IReadOnlyList<ImagePoint> Points, Annota
     }
 }
 
-public sealed record TextAnnotation(ImagePoint Position, string Text, AnnotationStyle Style, double FontSize, ImageRect Extent) : Annotation
+public sealed record TextAnnotation(ImagePoint Position, string Text, AnnotationStyle Style, double FontSize, ImageRect Extent) : Annotation, IStyledAnnotation
 {
     public override ImageRect Bounds => Extent;
 
@@ -153,7 +158,7 @@ public sealed record TextAnnotation(ImagePoint Position, string Text, Annotation
     public override Annotation WithColor(Rgba color) => this with { Style = Style with { Color = color } };
 }
 
-public sealed record CounterAnnotation(ImagePoint Center, int Number, AnnotationStyle Style) : Annotation
+public sealed record CounterAnnotation(ImagePoint Center, int Number, AnnotationStyle Style) : Annotation, IStyledAnnotation
 {
     public const double Radius = 14;
 

@@ -41,6 +41,10 @@ public sealed partial class EditorViewModel : ObservableObject
     private IReadOnlyList<Annotation> _dragOrigins = [];
     private List<ImagePoint>? _strokePoints;
     private Annotation[] _clipboard = [];
+    private Rgba _defaultColor = Rgba.Red;
+    private double _defaultStrokeWidth = 4;
+    private double _defaultFontSize = DefaultFontSize;
+    private int _defaultObscureStrength = ObscureAnnotation.DefaultStrength;
     private bool _dragging;
 
     public EditorViewModel(
@@ -104,19 +108,47 @@ public sealed partial class EditorViewModel : ObservableObject
     public partial EditorTool ActiveTool { get; set; } = EditorTool.Select;
 
     [ObservableProperty]
-    public partial double FontSize { get; set; } = DefaultFontSize;
-
-    [ObservableProperty]
-    public partial int ObscureStrength { get; set; } = ObscureAnnotation.DefaultStrength;
-
-    [ObservableProperty]
     public partial Rgba CanvasBackground { get; set; }
 
-    [ObservableProperty]
-    public partial Rgba Color { get; set; } = Rgba.Red;
+    public Rgba Color
+    {
+        get => Selection.OfType<IStyledAnnotation>().FirstOrDefault()?.Style.Color
+            ?? Selection.OfType<HighlightAnnotation>().FirstOrDefault()?.Color
+            ?? _defaultColor;
+        set => Apply(ref _defaultColor, value, a => a.WithColor(value), nameof(Color));
+    }
 
-    [ObservableProperty]
-    public partial double StrokeWidth { get; set; } = 4;
+    public double StrokeWidth
+    {
+        get => Selection.OfType<IStyledAnnotation>().FirstOrDefault()?.Style.StrokeWidth ?? _defaultStrokeWidth;
+        set => Apply(ref _defaultStrokeWidth, value, a => a.WithStrokeWidth(value), nameof(StrokeWidth));
+    }
+
+    public double FontSize
+    {
+        get => EditingText?.FontSize ?? Selection.OfType<TextAnnotation>().FirstOrDefault()?.FontSize ?? _defaultFontSize;
+        set
+        {
+            if (EditingText is { } editing)
+            {
+                if (editing.FontSize != value)
+                {
+                    EditingText = editing with { FontSize = value, Extent = MeasureExtent(editing.Position, editing.Text, value) };
+                    OnPropertyChanged(nameof(FontSize));
+                }
+
+                return;
+            }
+
+            Apply(ref _defaultFontSize, value, a => a is TextAnnotation text ? text with { FontSize = value, Extent = MeasureExtent(text.Position, text.Text, value) } : a, nameof(FontSize));
+        }
+    }
+
+    public int ObscureStrength
+    {
+        get => Selection.OfType<ObscureAnnotation>().FirstOrDefault()?.Strength ?? _defaultObscureStrength;
+        set => Apply(ref _defaultObscureStrength, value, a => a is ObscureAnnotation obscure ? obscure.WithStrength(value) : a, nameof(ObscureStrength));
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelection), nameof(ShowsObscureStrength), nameof(ShowsFontSize))]
@@ -150,21 +182,33 @@ public sealed partial class EditorViewModel : ObservableObject
     public bool ShowsObscureStrength =>
         ActiveTool is EditorTool.Blur or EditorTool.Pixelate || Selection.Any(a => a is ObscureAnnotation);
 
-    partial void OnObscureStrengthChanged(int value) =>
-        Restyle(a => a is ObscureAnnotation obscure ? obscure.WithStrength(value) : a);
-
     public bool ShowsFontSize =>
         ActiveTool == EditorTool.Text || EditingText is not null || Selection.Any(a => a is TextAnnotation);
 
-    partial void OnFontSizeChanged(double value)
+    private void Apply<T>(ref T fallback, T value, Func<Annotation, Annotation> change, string propertyName)
+        where T : struct
     {
-        if (EditingText is { } editing && editing.FontSize != value)
+        if (HasSelection)
         {
-            EditingText = editing with { FontSize = value, Extent = MeasureExtent(editing.Position, editing.Text, value) };
+            Restyle(change);
+        }
+        else
+        {
+            fallback = value;
         }
 
-        Restyle(a => a is TextAnnotation text ? text with { FontSize = value, Extent = MeasureExtent(text.Position, text.Text, value) } : a);
+        OnPropertyChanged(propertyName);
     }
+
+    partial void OnSelectionChanged(IReadOnlyList<Annotation> value)
+    {
+        OnPropertyChanged(nameof(Color));
+        OnPropertyChanged(nameof(StrokeWidth));
+        OnPropertyChanged(nameof(FontSize));
+        OnPropertyChanged(nameof(ObscureStrength));
+    }
+
+    partial void OnEditingTextChanged(TextAnnotation? value) => OnPropertyChanged(nameof(FontSize));
 
     private ImageRect MeasureExtent(ImagePoint position, string text, double fontSize)
     {
@@ -345,7 +389,6 @@ public sealed partial class EditorViewModel : ObservableObject
 
         Selection = [];
         EditingText = text;
-        FontSize = text.FontSize;
         PendingTextPosition = text.Position;
         return true;
     }
@@ -537,28 +580,21 @@ public sealed partial class EditorViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void SelectTool(EditorTool tool)
+    private void SelectTool(EditorTool tool) => ActiveTool = tool;
+
+    partial void OnActiveToolChanged(EditorTool value)
     {
-        ActiveTool = tool;
-        if (tool != EditorTool.Select)
+        if (value != EditorTool.Select)
         {
             Selection = [];
         }
     }
 
     [RelayCommand]
-    private void SelectColor(Rgba color)
-    {
-        Color = color;
-        Restyle(a => a.WithColor(color));
-    }
+    private void SelectColor(Rgba color) => Color = color;
 
     [RelayCommand]
-    private void SelectStrokeWidth(double width)
-    {
-        StrokeWidth = width;
-        Restyle(a => a.WithStrokeWidth(width));
-    }
+    private void SelectStrokeWidth(double width) => StrokeWidth = width;
 
     [RelayCommand(CanExecute = nameof(CanUndo))]
     private void Undo()
