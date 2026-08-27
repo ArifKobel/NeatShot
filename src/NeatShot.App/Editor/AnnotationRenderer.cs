@@ -16,6 +16,7 @@ public sealed class AnnotationRenderer
     private const double ArrowHeadLength = 4;
     private const double ArrowHeadWidth = 2.2;
     private const double HandleSize = 8;
+    private const double SplineTension = 6;
     private const byte HighlightAlpha = 0x70;
 
     private static readonly Color AccentColor = Color.FromRgb(0x0A, 0x84, 0xFF);
@@ -153,7 +154,8 @@ public sealed class AnnotationRenderer
 
     private static void DrawFreehand(DrawingContext context, FreehandAnnotation freehand)
     {
-        if (freehand.Points.Count == 0)
+        var points = freehand.Points;
+        if (points.Count == 0)
         {
             return;
         }
@@ -166,8 +168,20 @@ public sealed class AnnotationRenderer
         var path = new StreamGeometry();
         using (var geometry = path.Open())
         {
-            geometry.BeginFigure(ToPoint(freehand.Points[0]), isFilled: false, isClosed: false);
-            geometry.PolyLineTo(freehand.Points.Skip(1).Select(ToPoint).ToList(), isStroked: true, isSmoothJoin: true);
+            geometry.BeginFigure(ToPoint(points[0]), isFilled: false, isClosed: false);
+            for (var i = 0; i < points.Count - 1; i++)
+            {
+                var previous = ToPoint(points[Math.Max(i - 1, 0)]);
+                var current = ToPoint(points[i]);
+                var next = ToPoint(points[i + 1]);
+                var after = ToPoint(points[Math.Min(i + 2, points.Count - 1)]);
+                geometry.BezierTo(
+                    current + (next - previous) / SplineTension,
+                    next - (after - current) / SplineTension,
+                    next,
+                    isStroked: true,
+                    isSmoothJoin: true);
+            }
         }
 
         context.DrawGeometry(null, pen, path);

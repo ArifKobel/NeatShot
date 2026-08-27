@@ -30,6 +30,7 @@ public sealed partial class EditorViewModel : ObservableObject
     private const double MinimumDragDistance = 2;
     private const double PasteOffset = 12;
     private const double FastNudge = 10;
+    private const double StrokeSimplifyTolerance = 1.5;
     private const double MinimumShapeSize = 2;
     private const double MinZoom = 0.1;
     private const double MaxZoom = 8;
@@ -279,7 +280,7 @@ public sealed partial class EditorViewModel : ObservableObject
                 break;
             case EditorTool.Freehand:
                 _strokePoints = [point];
-                Preview = new FreehandAnnotation(_strokePoints.ToArray(), CurrentStyle);
+                Preview = Stroke(_strokePoints);
                 break;
             case EditorTool.Counter:
                 Commit(new CounterAnnotation(point, Document.NextCounterNumber, CurrentStyle));
@@ -314,7 +315,7 @@ public sealed partial class EditorViewModel : ObservableObject
                 break;
             case EditorTool.Freehand when _strokePoints is not null:
                 _strokePoints.Add(point);
-                Preview = new FreehandAnnotation(_strokePoints.ToArray(), CurrentStyle);
+                Preview = Stroke(_strokePoints);
                 break;
             case EditorTool.Arrow:
             case EditorTool.Rectangle:
@@ -343,7 +344,7 @@ public sealed partial class EditorViewModel : ObservableObject
                 EndSelectDrag(moved, extendSelection);
                 break;
             case EditorTool.Freehand when _strokePoints is { Count: > 1 }:
-                Document.Execute(new AddAnnotationCommand(new FreehandAnnotation(_strokePoints.ToArray(), CurrentStyle)));
+                Document.Execute(new AddAnnotationCommand(Stroke(_strokePoints)));
                 break;
             case EditorTool.Arrow:
             case EditorTool.Rectangle:
@@ -434,6 +435,9 @@ public sealed partial class EditorViewModel : ObservableObject
     }
 
     private AnnotationStyle CurrentStyle => new(Color, StrokeWidth);
+
+    private FreehandAnnotation Stroke(List<ImagePoint> points) =>
+        new(PathSimplifier.Simplify(PathSimplifier.Smooth(points), StrokeSimplifyTolerance), CurrentStyle);
 
     private void BeginSelectDrag(ImagePoint point, double tolerance, bool extend)
     {
