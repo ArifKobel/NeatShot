@@ -6,7 +6,7 @@
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="Icons/Lucide.xaml" />
+        <ResourceDictionary Source="Icons/Icons.xaml" />
       </ResourceDictionary.MergedDictionaries>
 
       <Geometry x:Key="IconCounter">M2,12 A10,10 0 1 0 22,12 A10,10 0 1 0 2,12 M9.5,9.5 L12.5,7 V17</Geometry>
