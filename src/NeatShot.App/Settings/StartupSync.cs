@@ -14,15 +14,13 @@ public sealed class StartupSync : IHostedService
         _startup = startup;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var wanted = _settings.Current.LaunchAtStartup;
-        if (_startup.IsEnabled != wanted)
+        var enabled = _startup.IsEnabled;
+        if (_settings.Current.LaunchAtStartup != enabled)
         {
-            _startup.SetEnabled(wanted);
+            await _settings.UpdateAsync(settings => settings with { LaunchAtStartup = enabled }, cancellationToken);
         }
-
-        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
