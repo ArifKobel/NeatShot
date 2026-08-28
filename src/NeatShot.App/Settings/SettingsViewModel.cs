@@ -93,7 +93,11 @@ public sealed partial class SettingsViewModel : ObservableObject
             Hotkeys = hotkeys,
         });
 
-        _startup.SetEnabled(LaunchAtStartup);
+        if (_startup.IsEnabled != LaunchAtStartup)
+        {
+            _startup.SetEnabled(LaunchAtStartup);
+        }
+
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 

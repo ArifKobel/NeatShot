@@ -24,8 +24,7 @@ public sealed class RegistryStartupRegistrar : IStartupRegistrar
         get
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKey);
-            return key?.GetValue(ValueName) is string value
-                && value.Trim('"').Equals(_executablePath, StringComparison.OrdinalIgnoreCase);
+            return key?.GetValue(ValueName) is string value && File.Exists(value.Trim('"'));
         }
     }
 
