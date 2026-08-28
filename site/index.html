@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeatShot. Screenshots, tidy.</title>
+<meta name="description" content="A screenshot tool for Windows in the spirit of CleanShot X. One shortcut, a card in the corner, an editor that keeps every annotation editable. Free and open source.">
+<meta property="og:title" content="NeatShot. Screenshots, tidy.">
+<meta property="og:description" content="Capture, mark up, paste. A CleanShot X style screenshot tool for Windows.">
+<meta property="og:image" content="https://arifkobel.github.io/NeatShot/img/editor.png">
+<link rel="icon" href="img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #151519;
+  --panel: #1e1e23;
+  --line: #2a2a31;
+  --ink: #f5f5f7;
+  --muted: #9a9aa3;
+  --red: #e5484d;
+  --blue: #4c8dff;
+  --display: "Bricolage Grotesque", "Segoe UI Variable Display", system-ui, sans-serif;
+  --body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
+
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 0;
+}
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-family: var(--display); font-weight: 700; font-size: 20px; }
+.brand img { width: 30px; height: 30px; border-radius: 8px; }
+nav { display: flex; gap: 26px; font-size: 15px; color: var(--muted); }
+nav a { text-decoration: none; }
+nav a:hover { color: var(--ink); }
+
+.hero {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 56px; align-items: center;
+  padding: 56px 0 96px;
+}
+h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(44px, 6vw, 76px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  font-variation-settings: "opsz" 96;
+}
+h1 em { font-style: normal; color: var(--red); }
+.lede { color: var(--muted); font-size: 19px; margin: 26px 0 34px; max-width: 42ch; }
+.cta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.button {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--ink); color: var(--bg);
+  font-weight: 500; text-decoration: none;
+  padding: 14px 22px; border-radius: 12px;
+  transition: transform .15s ease, background .15s ease;
+}
+.button:hover { transform: translateY(-1px); background: #fff; }
+.button svg { width: 18px; height: 18px; }
+.cta small { color: var(--muted); font-size: 14px; line-height: 1.4; }
+.cta small a { color: var(--muted); }
+
+kbd {
+  font-family: var(--mono); font-size: 0.8em; font-weight: 500;
+  background: var(--panel); border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 6px; padding: 2px 7px; color: var(--ink); white-space: nowrap;
+}
+
+.stage {
+  position: relative; aspect-ratio: 16 / 10;
+  border-radius: 16px; overflow: hidden;
+  background: #0d0d10;
+  border: 1px solid var(--line);
+  box-shadow: 0 40px 80px -30px rgba(0,0,0,.8);
+}
+.stage img { width: 100%; height: 100%; object-fit: cover; object-position: left top; }
+.stage .dim {
+  position: absolute; inset: 0; background: rgba(0,0,0,.42);
+  animation: dim 9s ease-in-out infinite;
+}
+.marquee {
+  position: absolute; left: 22%; top: 18%; width: 0; height: 0;
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,.42);
+  animation: marquee 9s ease-in-out infinite;
+}
+.marquee::after {
+  content: "918 × 574";
+  position: absolute; left: 0; bottom: calc(100% + 8px);
+  font: 500 12px var(--mono);
+  background: rgba(21,21,25,.9); color: var(--ink);
+  padding: 3px 7px; border-radius: 5px;
+}
+.card {
+  position: absolute; left: 3.5%; bottom: 5%; width: 34%;
+  border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 24px 40px -14px rgba(0,0,0,.9);
+  transform: translateX(-130%);
+  animation: card 9s ease-in-out infinite;
+}
+.card img { width: 100%; height: auto; }
+@keyframes dim {
+  0%, 8% { opacity: 0; }
+  12%, 50% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+@keyframes marquee {
+  0%, 12% { width: 0; height: 0; opacity: 0; }
+  14% { opacity: 1; }
+  40%, 50% { width: 58%; height: 60%; opacity: 1; }
+  56%, 100% { width: 58%; height: 60%; opacity: 0; }
+}
+@keyframes card {
+  0%, 55% { transform: translateX(-130%); }
+  62%, 92% { transform: translateX(0); }
+  100% { transform: translateX(-130%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dim, .marquee, .card { animation: none; }
+  .dim { opacity: 1; }
+  .marquee { width: 58%; height: 60%; opacity: 1; }
+  .card { transform: none; }
+}
+
+section { padding: 72px 0; border-top: 1px solid var(--line); }
+.eyebrow {
+  font-family: var(--mono); font-size: 13px; color: var(--muted);
+  letter-spacing: .04em; margin-bottom: 14px;
+}
+h2 {
+  font-family: var(--display); font-weight: 700;
+  font-size: clamp(30px, 3.6vw, 42px); letter-spacing: -0.02em; line-height: 1.05;
+  max-width: 20ch;
+}
+.sub { color: var(--muted); max-width: 56ch; margin-top: 16px; }
+
+.modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 44px; }
+.mode { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+.mode kbd { font-size: 14px; }
+.mode h3 { font-family: var(--display); font-size: 22px; margin: 18px 0 8px; letter-spacing: -0.01em; }
+.mode p { color: var(--muted); font-size: 15px; }
+
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; margin-top: 8px; }
+.split.flip > :first-child { order: 2; }
+.split ul { list-style: none; margin-top: 22px; display: grid; gap: 10px; color: var(--muted); }
+.split li { padding-left: 18px; position: relative; }
+.split li::before { content: ""; position: absolute; left: 0; top: .7em; width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+.shot { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
+.cardshot { width: min(320px, 100%); margin-inline: auto; }
+
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.tools span { font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+
+.download { text-align: center; padding: 96px 0; }
+.download h2 { margin-inline: auto; }
+.download .cta { justify-content: center; margin-top: 30px; }
+.facts { display: flex; justify-content: center; gap: 28px; flex-wrap: wrap; margin-top: 30px; color: var(--muted); font-size: 15px; }
+
+footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--muted); font-size: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+footer a { text-decoration: none; }
+footer a:hover { color: var(--ink); }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: minmax(0, 1fr); padding: 32px 0 64px; }
+  .modes { grid-template-columns: minmax(0, 1fr); }
+  .split, .split.flip { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .split.flip > :first-child { order: 0; }
+  nav { display: none; }
+  section { padding: 56px 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="brand" href="#"><img src="img/icon.png" alt="">NeatShot</a>
+    <nav>
+      <a href="#capture">Capture</a>
+      <a href="#card">Card</a>
+      <a href="#editor">Editor</a>
+      <a href="https://github.com/ArifKobel/NeatShot">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>Screenshots, <em>tidy.</em></h1>
+      <p class="lede">A screenshot tool for Windows in the spirit of CleanShot X. One shortcut, a card in the corner, an editor that keeps every annotation editable.</p>
+      <div class="cta">
+        <a class="button" href="https://github.com/ArifKobel/NeatShot/releases/latest">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+          Download for Windows
+        </a>
+        <small>Windows 10 and 11, 64 bit.<br>No admin rights, no runtime to install.</small>
+      </div>
+    </div>
+    <div class="stage" aria-label="Region capture animation">
+      <img src="img/editor.png" alt="">
+      <div class="dim"></div>
+      <div class="marquee"></div>
+      <div class="card"><img src="img/quick-access.png" alt=""></div>
+    </div>
+  </div>
+</div>
+
+<section id="capture">
+  <div class="wrap">
+    <p class="eyebrow">Capture</p>
+    <h2>Three shortcuts. The overlay never ends up in the shot.</h2>
+    <p class="sub">NeatShot freezes the desktop before it draws the overlay, so what you select is exactly what you get. Every monitor gets its own DPI correct overlay.</p>
+    <div class="modes">
+      <div class="mode">
+        <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>1</kbd>
+        <h3>Fullscreen</h3>
+        <p>The monitor under the cursor, instantly.</p>
+      </div>
+      <div class="mode">
+        <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>2</kbd>
+        <h3>Window</h3>
+        <p>Hover snaps to windows. Click to take the one you want.</p>
+      </div>
+      <div class="mode">
+        <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>3</kbd>
+        <h3>Region</h3>
+        <p>Drag a rectangle. The size follows the cursor as you go.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="card">
+  <div class="wrap split">
+    <div>
+      <p class="eyebrow">Quick access</p>
+      <h2>A card in the corner, not a window in the way.</h2>
+      <ul>
+        <li>Slides in at the bottom left after every capture.</li>
+        <li>Hover to copy, save, reveal in Explorer or annotate.</li>
+        <li>Drag the thumbnail into any app to drop the file there.</li>
+        <li>Drag it to the left edge to dismiss it.</li>
+        <li>Nothing lands in your pictures folder until you say so.</li>
+      </ul>
+    </div>
+    <div class="shot cardshot"><img src="img/quick-access.png" alt="Quick access card with copy, save, reveal and annotate actions"></div>
+  </div>
+</section>
+
+<section id="editor">
+  <div class="wrap split flip">
+    <div>
+      <p class="eyebrow">Editor</p>
+      <h2>Every annotation stays editable.</h2>
+      <p class="sub">Move it, resize it, change its color or line width, double click text to rewrite it. Drag something past the edge and the canvas grows with it. Undo is unlimited.</p>
+      <div class="tools">
+        <span>Arrow</span><span>Rectangle</span><span>Ellipse</span><span>Pen</span><span>Text</span><span>Counter</span><span>Highlighter</span><span>Blur</span><span>Pixelate</span>
+      </div>
+    </div>
+    <div class="shot"><img src="img/editor.png" alt="NeatShot editor with an annotated screenshot"></div>
+  </div>
+</section>
+
+<section class="download">
+  <div class="wrap">
+    <h2>Free, open source, no account.</h2>
+    <div class="cta">
+      <a class="button" href="https://github.com/ArifKobel/NeatShot/releases/latest">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+        Download for Windows
+      </a>
+    </div>
+    <div class="facts">
+      <span>Setup or portable zip</span>
+      <span>MIT license</span>
+      <span>Built with WPF on .NET 10</span>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <footer>
+    <span>NeatShot by <a href="https://github.com/ArifKobel">Arif Kobel</a></span>
+    <span><a href="https://github.com/ArifKobel/NeatShot">Source</a> · <a href="https://github.com/ArifKobel/NeatShot/issues">Issues</a> · <a href="https://github.com/ArifKobel/NeatShot/releases">Releases</a></span>
+  </footer>
+</div>
+
+</body>
+</html>
