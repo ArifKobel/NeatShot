@@ -28,14 +28,27 @@ UninstallDisplayIcon={app}\NeatShot.exe
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
+WizardSizePercent=110
+WizardImageFile=assets\wizard-*.bmp
+WizardSmallImageFile=assets\wizard-small-*.bmp
+WizardImageStretch=no
+DisableWelcomePage=no
+DisableDirPage=auto
+DisableReadyPage=yes
+ShowLanguageDialog=no
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 CloseApplications=yes
 RestartApplications=no
-LicenseFile=..\LICENSE
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Messages]
+WelcomeLabel1=Welcome to NeatShot
+WelcomeLabel2=NeatShot lives in your tray and captures the screen, a window or a region with one shortcut. Click Install to continue.
+FinishedHeadingLabel=You're all set
+FinishedLabel=Alt+Shift+1 captures the screen, Alt+Shift+2 a window and Alt+Shift+3 a region. Each capture lands in a card at the bottom left, ready to copy, save or annotate.
 
 [Tasks]
 Name: "autostart"; Description: "Launch NeatShot when I sign in"; GroupDescription: "Startup:"
