@@ -47,6 +47,7 @@ public sealed partial class EditorViewModel : ObservableObject
     private double _defaultFontSize = DefaultFontSize;
     private int _defaultObscureStrength = ObscureAnnotation.DefaultStrength;
     private bool _dragging;
+    private bool _editingSelection;
 
     public EditorViewModel(
         AnnotationDocument document,
@@ -253,7 +254,22 @@ public sealed partial class EditorViewModel : ObservableObject
     }
 
     public Annotation? HitAnnotation(ImagePoint point) =>
-        Selection.FirstOrDefault(a => a.Bounds.Contains(point)) ?? Document.HitTest(point);
+        Selection.FirstOrDefault(a => a.Bounds.Contains(point)) ?? Document.HitTest(point, Handles);
+
+    public bool Handles(Annotation annotation) => ActiveTool switch
+    {
+        EditorTool.Select => true,
+        EditorTool.Arrow => annotation is ArrowAnnotation,
+        EditorTool.Rectangle => annotation is RectangleAnnotation,
+        EditorTool.Ellipse => annotation is EllipseAnnotation,
+        EditorTool.Freehand => annotation is FreehandAnnotation,
+        EditorTool.Text => annotation is TextAnnotation,
+        EditorTool.Counter => annotation is CounterAnnotation,
+        EditorTool.Highlight => annotation is HighlightAnnotation,
+        EditorTool.Blur => annotation is ObscureAnnotation { Kind: ObscureKind.Blur },
+        EditorTool.Pixelate => annotation is ObscureAnnotation { Kind: ObscureKind.Pixelate },
+        _ => false,
+    };
 
     public static IEnumerable<(Handle Handle, ImagePoint Position)> HandlePositions(ImageRect bounds)
     {
@@ -272,12 +288,21 @@ public sealed partial class EditorViewModel : ObservableObject
         _dragStart = point;
         _dragging = true;
         Preview = null;
+        _editingSelection = ActiveTool == EditorTool.Select || HitHandle(point, handleTolerance) != Handle.None;
+
+        if (_editingSelection)
+        {
+            BeginSelectDrag(point, handleTolerance, extendSelection);
+            return;
+        }
+
+        if (!extendSelection)
+        {
+            Selection = [];
+        }
 
         switch (ActiveTool)
         {
-            case EditorTool.Select:
-                BeginSelectDrag(point, handleTolerance, extendSelection);
-                break;
             case EditorTool.Freehand:
                 _strokePoints = [point];
                 Preview = Stroke(_strokePoints);
@@ -301,18 +326,14 @@ public sealed partial class EditorViewModel : ObservableObject
         var dx = point.X - _dragStart.X;
         var dy = point.Y - _dragStart.Y;
 
+        if (_editingSelection)
+        {
+            MoveSelectDrag(point, dx, dy);
+            return;
+        }
+
         switch (ActiveTool)
         {
-            case EditorTool.Select when _activeHandle == Handle.Body:
-                Previews = _dragOrigins.ToDictionary(a => a.Id, a => a.Translate(dx, dy));
-                break;
-            case EditorTool.Select when _activeHandle != Handle.None && _dragOrigins.Count == 1:
-                var resized = Resize(_dragOrigins[0], _activeHandle, point);
-                Previews = new Dictionary<Guid, Annotation> { [resized.Id] = resized };
-                break;
-            case EditorTool.Select:
-                Marquee = ImageRect.FromPoints(_dragStart, point);
-                break;
             case EditorTool.Freehand when _strokePoints is not null:
                 _strokePoints.Add(point);
                 Preview = Stroke(_strokePoints);
@@ -338,11 +359,13 @@ public sealed partial class EditorViewModel : ObservableObject
         _dragging = false;
         var moved = _dragStart.DistanceTo(point) >= MinimumDragDistance;
 
-        switch (ActiveTool)
+        if (_editingSelection)
         {
-            case EditorTool.Select:
-                EndSelectDrag(moved, extendSelection);
-                break;
+            EndSelectDrag(moved, extendSelection);
+        }
+
+        switch (_editingSelection ? EditorTool.Select : ActiveTool)
+        {
             case EditorTool.Freehand when _strokePoints is { Count: > 1 }:
                 Document.Execute(new AddAnnotationCommand(Stroke(_strokePoints)));
                 break;
@@ -366,6 +389,7 @@ public sealed partial class EditorViewModel : ObservableObject
         _dragOrigins = [];
         _activeHandle = Handle.None;
         _strokePoints = null;
+        _editingSelection = false;
     }
 
     public void SelectAt(ImagePoint point)
@@ -410,8 +434,7 @@ public sealed partial class EditorViewModel : ObservableObject
             {
                 var updated = editing with { Text = text.Trim(), Extent = extent };
                 Document.Execute(new ReplaceAnnotationCommand(editing, updated));
-                ActiveTool = EditorTool.Select;
-                Selection = [updated];
+                Selection = Handles(updated) ? [updated] : [];
             }
         }
         else if (editing is not null)
@@ -474,13 +497,30 @@ public sealed partial class EditorViewModel : ObservableObject
         _dragOrigins = Selection;
     }
 
+    private void MoveSelectDrag(ImagePoint point, double dx, double dy)
+    {
+        if (_activeHandle == Handle.Body)
+        {
+            Previews = _dragOrigins.ToDictionary(a => a.Id, a => a.Translate(dx, dy));
+        }
+        else if (_activeHandle != Handle.None && _dragOrigins.Count == 1)
+        {
+            var resized = Resize(_dragOrigins[0], _activeHandle, point);
+            Previews = new Dictionary<Guid, Annotation> { [resized.Id] = resized };
+        }
+        else
+        {
+            Marquee = ImageRect.FromPoints(_dragStart, point);
+        }
+    }
+
     private void EndSelectDrag(bool moved, bool extend)
     {
         if (_activeHandle == Handle.None)
         {
             if (Marquee is { IsEmpty: false } marquee)
             {
-                var inside = Annotations.Where(a => a.Bounds.IntersectsWith(marquee)).ToArray();
+                var inside = Annotations.Where(a => Handles(a) && a.Bounds.IntersectsWith(marquee)).ToArray();
                 Selection = extend ? Selection.Union(inside).ToArray() : inside;
             }
 
@@ -559,7 +599,6 @@ public sealed partial class EditorViewModel : ObservableObject
     private void Commit(Annotation annotation)
     {
         Document.Execute(new AddAnnotationCommand(annotation));
-        ActiveTool = EditorTool.Select;
         Selection = [annotation];
     }
 
@@ -588,9 +627,10 @@ public sealed partial class EditorViewModel : ObservableObject
 
     partial void OnActiveToolChanged(EditorTool value)
     {
-        if (value != EditorTool.Select)
+        var kept = Selection.Where(Handles).ToArray();
+        if (kept.Length != Selection.Count)
         {
-            Selection = [];
+            Selection = kept;
         }
     }
 

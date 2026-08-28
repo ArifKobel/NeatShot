@@ -151,7 +151,7 @@ public sealed class EditorCanvas : FrameworkElement
             return;
         }
 
-        if (e.ClickCount == 2 && ViewModel?.ActiveTool == EditorTool.Select && ViewModel.BeginTextEdit(CanvasToImage(e.GetPosition(this))))
+        if (e.ClickCount == 2 && ViewModel?.ActiveTool is EditorTool.Select or EditorTool.Text && ViewModel.BeginTextEdit(CanvasToImage(e.GetPosition(this))))
         {
             ReleaseMouseCapture();
             return;
@@ -370,12 +370,6 @@ public sealed class EditorCanvas : FrameworkElement
             return;
         }
 
-        if (ViewModel.ActiveTool != EditorTool.Select)
-        {
-            Cursor = ViewModel.ActiveTool == EditorTool.Text ? Cursors.IBeam : Cursors.Cross;
-            return;
-        }
-
         Cursor = ViewModel.HitHandle(CanvasToImage(position), HandleTolerance / _scale) switch
         {
             Handle.TopLeft or Handle.BottomRight => Cursors.SizeNWSE,
@@ -384,7 +378,12 @@ public sealed class EditorCanvas : FrameworkElement
             Handle.Left or Handle.Right => Cursors.SizeWE,
             Handle.ArrowStart or Handle.ArrowEnd => Cursors.Cross,
             Handle.Body => Cursors.SizeAll,
-            _ => Cursors.Arrow,
+            _ => ViewModel.ActiveTool switch
+            {
+                EditorTool.Select => Cursors.Arrow,
+                EditorTool.Text => Cursors.IBeam,
+                _ => Cursors.Cross,
+            },
         };
     }
 

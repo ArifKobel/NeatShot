@@ -59,11 +59,13 @@ public sealed class AnnotationDocument
 
     public bool Redo() => _history.Redo(this);
 
-    public Annotation? HitTest(ImagePoint point)
+    public Annotation? HitTest(ImagePoint point) => HitTest(point, _ => true);
+
+    public Annotation? HitTest(ImagePoint point, Func<Annotation, bool> accept)
     {
         for (var i = _annotations.Count - 1; i >= 0; i--)
         {
-            if (_annotations[i].HitTest(point))
+            if (accept(_annotations[i]) && _annotations[i].HitTest(point))
             {
                 return _annotations[i];
             }

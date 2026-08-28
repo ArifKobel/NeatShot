@@ -104,6 +104,19 @@ public class AnnotationDocumentTests
     }
 
     [Fact]
+    public void HitTest_SkipsAnnotationsTheFilterRejects()
+    {
+        var document = CreateDocument();
+        var rectangle = new RectangleAnnotation(new ImageRect(0, 0, 50, 50), Style);
+        var ellipse = new EllipseAnnotation(new ImageRect(10, 10, 20, 20), Style);
+        document.Execute(new AddAnnotationCommand(rectangle));
+        document.Execute(new AddAnnotationCommand(ellipse));
+
+        Assert.Same(rectangle, document.HitTest(new ImagePoint(20, 20), a => a is RectangleAnnotation));
+        Assert.Null(document.HitTest(new ImagePoint(20, 20), a => a is TextAnnotation));
+    }
+
+    [Fact]
     public void NextCounterNumber_ContinuesFromHighestExisting()
     {
         var document = CreateDocument();
