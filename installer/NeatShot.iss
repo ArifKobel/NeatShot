@@ -46,12 +46,19 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
 WelcomeLabel1=Welcome to NeatShot
-WelcomeLabel2=NeatShot lives in your tray and captures the screen, a window or a region with one shortcut. Click Install to continue.
+WelcomeLabel2=NeatShot lives in your tray and captures the screen, a window or a region with one shortcut.
 FinishedHeadingLabel=You're all set
+ClickNext=
+WizardSelectTasks=Options
+SelectTasksDesc=A couple of things you can decide now.
+SelectTasksLabel2=You can change this later in Settings.
+WizardInstalling=Installing
+InstallingLabel=Copying NeatShot to your computer.
+ClickFinish=
 FinishedLabel=Alt+Shift+1 captures the screen, Alt+Shift+2 a window and Alt+Shift+3 a region. Each capture lands in a card at the bottom left, ready to copy, save or annotate.
 
 [Tasks]
-Name: "autostart"; Description: "Launch NeatShot when I sign in"; GroupDescription: "Startup:"
+Name: "autostart"; Description: "Launch NeatShot when I sign in"
 
 [Files]
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -71,3 +78,78 @@ Filename: "taskkill"; Parameters: "/IM NeatShot.exe /F"; Flags: runhidden; RunOn
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{localappdata}\NeatShot\Cache"
+
+[Code]
+const
+  Background = $191515;
+  Panel = $221E1E;
+  Foreground = $F7F5F5;
+  Muted = $A39A9A;
+  DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+function DwmSetWindowAttribute(Wnd: HWND; Attribute: Integer; var Value: Integer; Size: Integer): Integer;
+  external 'DwmSetWindowAttribute@dwmapi.dll stdcall delayload';
+
+function SetWindowTheme(Wnd: HWND; AppName: String; IdList: Integer): Integer;
+  external 'SetWindowTheme@uxtheme.dll stdcall';
+
+procedure Darken(Control: TWinControl);
+begin
+  SetWindowTheme(Control.Handle, 'DarkMode_Explorer', 0);
+end;
+
+procedure Ink(Text: TNewStaticText; Color: TColor);
+begin
+  Text.Font.Color := Color;
+  Text.Color := Background;
+end;
+
+procedure InitializeWizard;
+var
+  Dark: Integer;
+begin
+  Dark := 1;
+  DwmSetWindowAttribute(WizardForm.Handle, DWMWA_USE_IMMERSIVE_DARK_MODE, Dark, SizeOf(Dark));
+
+  WizardForm.Color := Background;
+  WizardForm.MainPanel.Color := Panel;
+  WizardForm.InnerPage.Color := Background;
+  WizardForm.WelcomePage.Color := Background;
+  WizardForm.FinishedPage.Color := Background;
+  WizardForm.Bevel.Visible := False;
+  WizardForm.WizardSmallBitmapImage.BackColor := Panel;
+  WizardForm.WizardBitmapImage.BackColor := Background;
+  WizardForm.WizardBitmapImage2.BackColor := Background;
+  WizardForm.Bevel1.Visible := False;
+
+  Ink(WizardForm.WelcomeLabel1, Foreground);
+  Ink(WizardForm.WelcomeLabel2, Muted);
+  Ink(WizardForm.FinishedHeadingLabel, Foreground);
+  Ink(WizardForm.FinishedLabel, Muted);
+  WizardForm.PageNameLabel.Font.Color := Foreground;
+  WizardForm.PageNameLabel.Color := Panel;
+  WizardForm.PageDescriptionLabel.Font.Color := Muted;
+  WizardForm.PageDescriptionLabel.Color := Panel;
+  Ink(WizardForm.SelectDirLabel, Muted);
+  Ink(WizardForm.SelectDirBrowseLabel, Muted);
+  Ink(WizardForm.DiskSpaceLabel, Muted);
+  Ink(WizardForm.SelectTasksLabel, Muted);
+  Ink(WizardForm.StatusLabel, Muted);
+  Ink(WizardForm.FilenameLabel, Muted);
+
+  WizardForm.DirEdit.Color := Panel;
+  WizardForm.DirEdit.Font.Color := Foreground;
+  WizardForm.TasksList.Color := Background;
+  WizardForm.TasksList.Font.Color := Foreground;
+  WizardForm.RunList.Color := Background;
+  WizardForm.RunList.Font.Color := Foreground;
+
+  Darken(WizardForm.DirEdit);
+  Darken(WizardForm.DirBrowseButton);
+  Darken(WizardForm.TasksList);
+  Darken(WizardForm.RunList);
+  Darken(WizardForm.ProgressGauge);
+  Darken(WizardForm.BackButton);
+  Darken(WizardForm.NextButton);
+  Darken(WizardForm.CancelButton);
+end;
