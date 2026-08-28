@@ -33,8 +33,9 @@ WizardImageFile=assets\wizard-*.bmp
 WizardSmallImageFile=assets\wizard-small-*.bmp
 WizardImageStretch=no
 DisableWelcomePage=no
-DisableDirPage=auto
+DisableDirPage=yes
 DisableReadyPage=yes
+DisableFinishedPage=yes
 ShowLanguageDialog=no
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -46,19 +47,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
 WelcomeLabel1=Welcome to NeatShot
-WelcomeLabel2=NeatShot lives in your tray and captures the screen, a window or a region with one shortcut.
-FinishedHeadingLabel=You're all set
+WelcomeLabel2=NeatShot lives in your tray and captures the screen, a window or a region with one shortcut.%n%nAlt+Shift+1 for the screen, Alt+Shift+2 for a window, Alt+Shift+3 for a region.
 ClickNext=
-WizardSelectTasks=Options
-SelectTasksDesc=A couple of things you can decide now.
-SelectTasksLabel2=You can change this later in Settings.
 WizardInstalling=Installing
 InstallingLabel=Copying NeatShot to your computer.
-ClickFinish=
-FinishedLabel=Alt+Shift+1 captures the screen, Alt+Shift+2 a window and Alt+Shift+3 a region. Each capture lands in a card at the bottom left, ready to copy, save or annotate.
-
-[Tasks]
-Name: "autostart"; Description: "Launch NeatShot when I sign in"
 
 [Files]
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -68,10 +60,10 @@ Name: "{group}\NeatShot"; Filename: "{app}\NeatShot.exe"
 Name: "{group}\Uninstall NeatShot"; Filename: "{uninstallexe}"
 
 [Registry]
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "NeatShot"; ValueData: """{app}\NeatShot.exe"""; Flags: uninsdeletevalue; Tasks: autostart
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "NeatShot"; ValueData: """{app}\NeatShot.exe"""; Flags: uninsdeletevalue; Check: AutostartWanted
 
 [Run]
-Filename: "{app}\NeatShot.exe"; Description: "Launch NeatShot"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\NeatShot.exe"; Flags: nowait
 
 [UninstallRun]
 Filename: "taskkill"; Parameters: "/IM NeatShot.exe /F"; Flags: runhidden; RunOnceId: "StopNeatShot"
@@ -92,6 +84,20 @@ function DwmSetWindowAttribute(Wnd: HWND; Attribute: Integer; var Value: Integer
 
 function SetWindowTheme(Wnd: HWND; AppName: String; IdList: Integer): Integer;
   external 'SetWindowTheme@uxtheme.dll stdcall';
+
+var
+  AutostartBox: TNewCheckBox;
+
+function AutostartWanted: Boolean;
+begin
+  Result := AutostartBox.Checked;
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpWelcome then
+    WizardForm.NextButton.Caption := 'Install';
+end;
 
 procedure Darken(Control: TWinControl);
 begin
@@ -115,7 +121,6 @@ begin
   WizardForm.MainPanel.Color := Panel;
   WizardForm.InnerPage.Color := Background;
   WizardForm.WelcomePage.Color := Background;
-  WizardForm.FinishedPage.Color := Background;
   WizardForm.Bevel.Visible := False;
   WizardForm.WizardSmallBitmapImage.BackColor := Panel;
   WizardForm.WizardBitmapImage.BackColor := Background;
@@ -124,30 +129,26 @@ begin
 
   Ink(WizardForm.WelcomeLabel1, Foreground);
   Ink(WizardForm.WelcomeLabel2, Muted);
-  Ink(WizardForm.FinishedHeadingLabel, Foreground);
-  Ink(WizardForm.FinishedLabel, Muted);
+
+  AutostartBox := TNewCheckBox.Create(WizardForm);
+  AutostartBox.Parent := WizardForm.WelcomePage;
+  AutostartBox.Left := WizardForm.WelcomeLabel2.Left;
+  AutostartBox.Top := WizardForm.WelcomePage.Height - ScaleY(40);
+  AutostartBox.Width := WizardForm.WelcomeLabel2.Width;
+  AutostartBox.Height := ScaleY(20);
+  AutostartBox.Caption := 'Launch NeatShot when I sign in';
+  AutostartBox.Checked := True;
+  AutostartBox.Color := Background;
+  AutostartBox.Font.Color := Foreground;
+  Darken(AutostartBox);
   WizardForm.PageNameLabel.Font.Color := Foreground;
   WizardForm.PageNameLabel.Color := Panel;
   WizardForm.PageDescriptionLabel.Font.Color := Muted;
   WizardForm.PageDescriptionLabel.Color := Panel;
-  Ink(WizardForm.SelectDirLabel, Muted);
-  Ink(WizardForm.SelectDirBrowseLabel, Muted);
-  Ink(WizardForm.DiskSpaceLabel, Muted);
-  Ink(WizardForm.SelectTasksLabel, Muted);
   Ink(WizardForm.StatusLabel, Muted);
   Ink(WizardForm.FilenameLabel, Muted);
 
-  WizardForm.DirEdit.Color := Panel;
-  WizardForm.DirEdit.Font.Color := Foreground;
-  WizardForm.TasksList.Color := Background;
-  WizardForm.TasksList.Font.Color := Foreground;
-  WizardForm.RunList.Color := Background;
-  WizardForm.RunList.Font.Color := Foreground;
 
-  Darken(WizardForm.DirEdit);
-  Darken(WizardForm.DirBrowseButton);
-  Darken(WizardForm.TasksList);
-  Darken(WizardForm.RunList);
   Darken(WizardForm.ProgressGauge);
   Darken(WizardForm.BackButton);
   Darken(WizardForm.NextButton);
